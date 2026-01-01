@@ -2,7 +2,7 @@ import axios from "axios";
 // import queryString from 'query-string';
 
 const commonAxios = axios.create({
-  baseURL: process.env.REACT_APP_API_URL + '/api',
+  baseURL: process.env.REACT_APP_API_URL + 'api',
   // paramsSerializer: params => queryString.stringify(params),
 });
 
