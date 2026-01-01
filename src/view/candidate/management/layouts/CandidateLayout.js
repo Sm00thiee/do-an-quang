@@ -2,7 +2,6 @@ import "./layout.css";
 import { useNavigate } from "react-router-dom";
 // import { AiTwotoneAppstore } from "react-icons/ai";
 import { createContext, useContext, useEffect, useState } from "react";
-;
 import candidateApi from "../../../../api/candidate";
 import educationApi from "../../../../api/education";
 import experienceApi from "../../../../api/experience";
@@ -22,7 +21,7 @@ function CandidateLayout(props) {
   const nav = useNavigate();
   const { currentPage, setCurrentPage } = useContext(AppContext);
   const isAuth = useCandidateAuthStore(state => state.isAuth);
-  
+
   const [personal, setPersonal] = useState({});
   const [educations, setEducations] = useState([]);
   const [experiences, setExperiences] = useState([]);

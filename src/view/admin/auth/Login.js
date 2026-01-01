@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from "react-router-dom";
-;
 import authApi from "../../../api/auth";
-;
 import { toast } from "react-toastify";
 
 import { useAdminAuthStore } from "../../../stores/adminAuthStore";
@@ -30,7 +28,7 @@ function Login() {
       .login(inf)
       .then((res) => {
         localStorage.setItem("admin_jwt", res.authorization.token);
-        toast.success("Đăng nhập thành công!");    
+        toast.success("Đăng nhập thành công!");
       })
       .catch(() => {
         setMsg("Email hoặc mật khẩu không chính xác!");

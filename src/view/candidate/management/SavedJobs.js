@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BsTrash3 } from "react-icons/bs";
-;
 import SavedJobPopup from "./SavedJobPopup";
 import candidateApi from "../../../api/candidate";
 
@@ -95,7 +94,7 @@ function SavedJobs() {
         </table>
         {jobs.length === 0 && <h5 className="">Không có bản ghi nào</h5>}
       </div>
-      <SavedJobPopup job_id={curJob.id} />     
+      <SavedJobPopup job_id={curJob.id} />
     </>
   );
 }

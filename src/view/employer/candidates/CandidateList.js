@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { BsCheckCircle, BsEye, BsSearch, BsXCircle } from "react-icons/bs";
 import "./custom.css";
 import { useForm } from "react-hook-form";
-;
 import { MessagePopup } from "./popup";
 import employerApi from "../../../api/employer";
 import Form from "react-bootstrap/Form";
@@ -159,8 +158,8 @@ function CandidateList() {
                       <td>{item.email}</td>
                       <td style={{ fontSize: "17px" }}>
                         {status !== "PASSED" &&
-                        status !== "RESUME_FAILED" &&
-                        status !== "INTERVIEW_FAILED" ? (
+                          status !== "RESUME_FAILED" &&
+                          status !== "INTERVIEW_FAILED" ? (
                           <>
                             <button
                               className="border-0 bg-white"

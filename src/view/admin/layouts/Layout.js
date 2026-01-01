@@ -8,9 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import "./layout_style.css";
 import { useContext, useEffect } from "react";
-;
 import authApi from "../../../api/auth";
-;
 import { AppContext } from "../../../App";
 import clsx from "clsx";
 
@@ -69,7 +67,7 @@ function Layout(props) {
         style={{ marginTop: "57px" }}
       >
         <div className="ts-smd fw-500 text-secondary menu-part d-flex flex-row flex-lg-column bg-white border-bottom border-lg-end">
-          
+
           <div
             className={clsx(
               "d-flex align-items-center ps-lg-5 py-lg-2 px-2 pointer hover-bgt-light",
@@ -109,7 +107,7 @@ function Layout(props) {
             <BsFillBriefcaseFill className="ts-lg me-1" />
             Quản lý yêu cầu tư vấn
           </div>
-      
+
         </div>
         <div className="content-part page-body">{props.children}</div>
       </div>

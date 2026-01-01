@@ -8,9 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import "./layout_style.css";
 import { useContext, useEffect } from "react";
-;
 import authApi from "../../../api/auth";
-;
 import { AppContext } from "../../../App";
 import clsx from "clsx";
 
@@ -101,7 +99,7 @@ function Layout(props) {
           >
             <BsFillPeopleFill className="fs-5 me-1" /> Ứng viên
           </div>
-      
+
         </div>
         <div className="content-part page-body">{props.children}</div>
       </div>

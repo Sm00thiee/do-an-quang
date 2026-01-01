@@ -6,7 +6,6 @@ import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
 import { useState } from "react";
 import emailjs from "@emailjs/browser";
-;
 import { emailjsConfig } from "../../../config/emailjs.config";
 
 import { useEmployerAuthStore } from "../../../stores/employerAuthStore";

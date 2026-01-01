@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { AiOutlinePlus } from "react-icons/ai";
 import JobDetail from "./JobDetail";
 import JobCreating from "./JobCreating";
-;
 import jtypeApi from "../../../api/jtype";
 import jlevelApi from "../../../api/jlevel";
 import industryApi from "../../../api/industry";
