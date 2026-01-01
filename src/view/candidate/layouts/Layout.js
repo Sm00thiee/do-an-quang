@@ -8,7 +8,7 @@ import authApi from "../../../api/auth";
 import candMsgApi from "../../../api/candidateMessage";
 import Pusher from "pusher-js";
 import BellDialog from "./BellDialog";
-import Stack from "react-bootstrap/Stack";
+import { Navbar, Nav, Container, Row, Col, Stack } from "react-bootstrap";
 import { AppContext } from "../../../App";
 import clsx from "clsx";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
@@ -88,253 +88,144 @@ function Layout(props) {
         setShow={setShowBellDialog}
         current={curNotification}
       />
-      <header>
-        <Stack
-          direction='horizontal'
-          gap={1}
-          className='fixed-top bg-white text-secondary shadow-sm ts-17 fw-500'
-        >
-          <Link
-            className='nav-link ms-2 pe-2 ts-xl pb-1'
-            to='/'
-            onClick={() => setCurrentPage("home")}
-          >
-            <img src='/image/Logo 4.png' alt='logo' />
-          </Link>
-          <Link
-            className={clsx(
-              "nav-link py-3 px-2",
-              currentPage === "home" && "text-main",
-            )}
-            to='/'
-            onClick={() => setCurrentPage("home")}
-          >
-            {t('home')}
-          </Link>
-          <Link
-            className={clsx(
-              "nav-link py-3 px-2",
-              currentPage === "roadmap" && "text-main",
-            )}
-            to='/roadmap'
-            onClick={() => setCurrentPage("roadmap")}
-          >
-            {t('roadmap')}
-          </Link>
-          <Link
-            className={clsx(
-              "nav-link py-3 px-2",
-              currentPage === "jobs" && "text-main",
-            )}
-            to='/jobs'
-            onClick={() => setCurrentPage("jobs")}
-          >
-            {t('jobs')}
-          </Link>
+      <Navbar bg="white" expand="lg" fixed="top" className="shadow-sm border-bottom py-2">
+        <Container fluid="lg">
+          <Navbar.Brand as={Link} to="/" onClick={() => setCurrentPage("home")}>
+            <img src="/image/Logo 4.png" alt="logo" style={{ maxHeight: "35px" }} />
+          </Navbar.Brand>
 
-          <div className='me-auto'></div>
-
-          {/* Language Switcher */}
-          <div className='me-3'>
-            <LanguageSwitcher />
+          <div className="d-flex align-items-center gap-2 d-lg-none">
+            {!isAuth && <LanguageSwitcher />}
+            {isAuth && (
+              <div className="position-relative" onClick={() => setShowListMsg(!showListMsg)}>
+                <BsBell className="fs-4 pointer text-secondary" />
+                {hasNew && (
+                  <BsFillCircleFill className="text-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle" style={{ fontSize: "8px" }} />
+                )}
+              </div>
+            )}
+            <Navbar.Toggle aria-controls="main-navbar" className="border-0 p-1" />
           </div>
 
-          {!isAuth ? (
-            <div className='d-flex align-items-center fw-normal ts-md pointer'>
-              <Link
-                to='/login'
-                className='text-decoration-none text-secondary'
-              >
-                {t('login')}
-              </Link>
-              <div className='vr mx-2 border-2' />
-              <Link
-                to='/signup'
-                className='text-decoration-none text-secondary'
-              >
-                {t('signup')}
-              </Link>
+          <Navbar.Collapse id="main-navbar">
+            <Nav className="me-auto my-3 my-lg-0 gap-lg-3 fw-500 text-secondary">
+              <Nav.Link as={Link} to="/" className={currentPage === "home" ? "text-main" : ""} onClick={() => setCurrentPage("home")}>{t('home')}</Nav.Link>
+              <Nav.Link as={Link} to="/roadmap" className={currentPage === "roadmap" ? "text-main" : ""} onClick={() => setCurrentPage("roadmap")}>{t('roadmap')}</Nav.Link>
+              <Nav.Link as={Link} to="/jobs" className={currentPage === "jobs" ? "text-main" : ""} onClick={() => setCurrentPage("jobs")}>{t('jobs')}</Nav.Link>
+            </Nav>
 
-              <div className='ms-3 me-2'>
-                <a
-                  href='/employer/login'
-                  className='btn bg-info text-white fw-500'
-                >
-                  {t('forEmployers')}
-                </a>
+            <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+              <div className="d-none d-lg-block">
+                <LanguageSwitcher />
               </div>
-            </div>
-          ) : (
-            <div className='d-flex align-items-center sidebar-right'>
-              <div
-                className='position-relative'
-                onMouseLeave={() => setShowListMsg(false)}
-              >
-                <BsBell
-                  className='fs-3 me-4 pointer'
-                  onClick={() => setShowListMsg(!showListMsg)}
-                />
-                {hasNew && <BsFillCircleFill className='bell-icon' />}
-                <div
-                  className={clsx(
-                    "position-absolute bg-white rounded z-index-1 msg-list fw-normal shadow",
-                    showListMsg ? "d-block" : "d-none",
-                  )}
-                >
-                  {bellMsgs.length > 0 ? (
-                    bellMsgs.map((item, index) => (
-                      <div
-                        key={"bell_msg" + index}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleReadMsg(item)}
-                        className={
-                          "text-wrap px-2 py-1 hover-bg-1" + msgStyles[index]
-                        }
-                      >
-                        {item.name}
-                      </div>
-                    ))
-                  ) : (
-                    <span className='ms-3'>{t('noNotifications')}</span>
-                  )}
+
+              {!isAuth ? (
+                <div className="d-flex flex-column flex-lg-row align-items-lg-center gap-3 fw-500">
+                  <Link to="/login" className="text-decoration-none text-secondary">{t('login')}</Link>
+                  <div className="vr d-none d-lg-block"></div>
+                  <Link to="/signup" className="text-decoration-none text-secondary">{t('signup')}</Link>
+                  <a href="/employer/login" className="btn btn-info text-white fw-500">{t('forEmployers')}</a>
                 </div>
-              </div>
+              ) : (
+                <div className="d-flex flex-lg-row flex-column align-items-lg-center gap-3">
+                  {/* Desktop Notification */}
+                  <div className="position-relative d-none d-lg-block" onMouseLeave={() => setShowListMsg(false)}>
+                    <BsBell
+                      className="fs-4 pointer text-secondary"
+                      onClick={() => setShowListMsg(!showListMsg)}
+                    />
+                    {hasNew && <BsFillCircleFill className="bell-icon" />}
 
-              <div className='dropdown pt-1'>
-                <img
-                  src={user_icon}
-                  alt='user_icon'
-                  style={{ width: "35px" }}
-                  className='rounded-pill border border-2'
-                />
-                &nbsp;
-                <span
-                  style={{ fontSize: "16px", cursor: "pointer" }}
-                  className='dropdown-toggle'
-                  data-bs-toggle='dropdown'
-                >
-                  {candidate.name && candidate.name.firstname}
-                </span>
-                <ul className='dropdown-menu'>
-                  <li>
-                    <Link className='dropdown-item' to='/candidate'>
-                      {t('account')}
-                    </Link>
-                  </li>
-                  <li>
-                    <button
-                      type='button'
-                      className='dropdown-item'
-                      onClick={handleLogout}
+                    {/* Message List Dropdown */}
+                    <div
+                      className={clsx(
+                        "position-absolute bg-white rounded z-index-1 msg-list fw-normal shadow end-0 mt-2",
+                        showListMsg ? "d-block" : "d-none"
+                      )}
+                      style={{ width: "300px", maxHeight: "400px", overflowY: "auto" }}
                     >
-                      {t('logout')}
-                    </button>
-                  </li>
-                </ul>
-              </div>
+                      {bellMsgs.length > 0 ? (
+                        bellMsgs.map((item, index) => (
+                          <div
+                            key={"bell_msg" + index}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleReadMsg(item)}
+                            className={
+                              "text-wrap px-3 py-2 border-bottom hover-bg-light " + (item.isRead === 0 ? "fw-bold text-primary bg-light" : "text-secondary")
+                            }
+                          >
+                            {item.name}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-center text-muted">{t('noNotifications')}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* User Menu */}
+                  <div className="dropdown">
+                    <div className="d-flex align-items-center gap-2 pointer dropdown-toggle" data-bs-toggle="dropdown">
+                      <img
+                        src={user_icon}
+                        alt="user"
+                        style={{ width: "32px", height: "32px" }}
+                        className="rounded-circle border"
+                      />
+                      <span className="fw-500 text-secondary">
+                        {candidate.name && candidate.name.firstname}
+                      </span>
+                    </div>
+                    <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                      <li><Link className="dropdown-item py-2" to="/candidate">{t('account')}</Link></li>
+                      <li><hr className="dropdown-divider" /></li>
+                      <li><button type="button" className="dropdown-item py-2 text-danger" onClick={handleLogout}>{t('logout')}</button></li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </Stack>
-      </header>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
       <main className='page-body' style={{ marginTop: "57px" }}>
         {props.children}
       </main>
-      <footer className='border-top' style={{ paddingTop: "35px" }}>
-        <div className='container'>
-          <div className='row'>
-            <div
-              className='col-md-4'
-              style={{ fontSize: "15.6px", paddingLeft: "27px" }}
-            >
-              <h5>{t('contactInfo')}</h5>
-              <p>{t('contactEmail')}</p>
-              <p>{t('contactPhone')}</p>
-              <p>{t('contactAddress')}</p>
-            </div>
-            <div className='col-md-4' style={{ paddingLeft: "125px" }}>
-              <h5>{t('categories')}</h5>
-              <ul className='list-unstyled'>
-                <li>
-                  <Link
-                    to={"#"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('itJobs')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"#"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('accountingJobs')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"#"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('businessJobs')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"#"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('marketingJobs')}
-                  </Link>
-                </li>
+      <footer className="border-top bg-white pt-5 pb-3">
+        <Container>
+          <Row className="gy-4">
+            <Col md={4} className="ps-md-4">
+              <h5 className="mb-3 text-secondary">{t('contactInfo')}</h5>
+              <div className="text-secondary d-flex flex-column gap-2">
+                <p className="mb-0">{t('contactEmail')}</p>
+                <p className="mb-0">{t('contactPhone')}</p>
+                <p className="mb-0">{t('contactAddress')}</p>
+              </div>
+            </Col>
+            <Col md={4} className="ps-md-5">
+              <h5 className="mb-3 text-secondary">{t('categories')}</h5>
+              <ul className="list-unstyled d-flex flex-column gap-2">
+                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('itJobs')}</Link></li>
+                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('accountingJobs')}</Link></li>
+                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('businessJobs')}</Link></li>
+                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('marketingJobs')}</Link></li>
               </ul>
-            </div>
-            <div className='col-md-4' style={{ paddingLeft: "120px" }}>
-              <h5>{t('links')}</h5>
-              <ul className='list-unstyled'>
-                <li>
-                  <Link
-                    to={"/"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('home')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"/jobs"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('jobs')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"/companies"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('companies')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to={"#"}
-                    className='text-secondary text-decoration-none'
-                  >
-                    {t('blog')}
-                  </Link>
-                </li>
+            </Col>
+            <Col md={4} className="ps-md-5">
+              <h5 className="mb-3 text-secondary">{t('links')}</h5>
+              <ul className="list-unstyled d-flex flex-column gap-2">
+                <li><Link to="/" className="text-secondary text-decoration-none hover-text-main">{t('home')}</Link></li>
+                <li><Link to="/jobs" className="text-secondary text-decoration-none hover-text-main">{t('jobs')}</Link></li>
+                <li><Link to="/companies" className="text-secondary text-decoration-none hover-text-main">{t('companies')}</Link></li>
+                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('blog')}</Link></li>
               </ul>
-            </div>
+            </Col>
+          </Row>
+          <hr className="my-4 text-secondary" />
+          <div className="text-center text-muted">
+            {t('allRightsReserved')}
           </div>
-          <hr />
-          <div className='row'>
-            <div className='col-12 text-center'>
-              <p className='text-muted'>
-                {t('allRightsReserved')}
-              </p>
-            </div>
-          </div>
-        </div>
+        </Container>
       </footer>
     </>
   );
