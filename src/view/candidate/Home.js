@@ -176,272 +176,237 @@ function Home() {
 
   const currentSession = chatSessions.find((s) => s.id === activeSession);
 
+  // Sidebar Content Component
+  const SidebarContent = () => (
+    <div className='d-flex flex-column h-100 text-white p-3' style={{ backgroundColor: '#1E293B' }}>
+      <div className='d-flex justify-content-between align-items-center mb-3'>
+        <div className='d-flex align-items-center'>
+          <BsChat className='me-2' size={18} />
+          <span className='fw-bold'>Chat bot</span>
+        </div>
+        <small className='text-muted'>by Nextstep</small>
+      </div>
+
+      <button
+        className='btn btn-outline-light btn-sm w-100 mb-3 d-flex align-items-center justify-content-center'
+        onClick={addNewChat}
+      >
+        <BsPlus className='me-2' />
+        {t('newChat')}
+      </button>
+
+      {/* Chat Sessions */}
+      <div className='flex-fill overflow-auto custom-scrollbar'>
+        {chatSessions.map((session) => (
+          <div
+            key={session.id}
+            className={`d-flex justify-content-between align-items-center p-3 rounded mb-2 cursor-pointer ${activeSession === session.id
+              ? "bg-secondary"
+              : "bg-transparent hover-bg-secondary"
+              }`}
+            onClick={() => {
+              setActiveSession(session.id);
+              if (window.innerWidth < 992) setShowMobileSidebar(false);
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <span
+              className='text-truncate'
+              style={{ fontSize: "14px", maxWidth: "160px" }}
+            >
+              {session.name}
+            </span>
+            <button
+              className='btn btn-sm text-white p-0 opacity-75 hover-opacity-100'
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteChat(session.id);
+              }}
+            >
+              <BsTrash size={12} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <>
+      <style>{`
+        .cursor-pointer { cursor: pointer; }
+        .hover-bg-secondary:hover { background-color: rgba(108, 117, 125, 0.2) !important; }
+        .hover-opacity-100:hover { opacity: 1 !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        #messagesContainer { scroll-behavior: smooth; }
+        
+        @media (max-width: 991.98px) {
+           .chat-layout { height: calc(100vh - 56px) !important; } /* Adjust for Navbar */
+        }
+      `}</style>
+
       {/* Chat Interface Section */}
-      <div className='container-fluid p-0' style={{ height: 'calc(100vh - 57px)' }}>
-        <div className='h-100'>
-          <div
-            className='overflow-hidden'
-            style={{
-              height: "100%",
-              width: "100%",
-            }}
-          >
-            <div className='d-flex h-100'>
-              {/* Sidebar */}
-              <div
-                className='text-white p-3 d-flex flex-column'
-                style={{ backgroundColor: '#1E293B', width: "320px", minWidth: "320px" }}
+      <div className='container-fluid p-0 chat-layout' style={{ height: 'calc(100vh - 57px)' }}>
+        <div className='d-flex h-100'>
+
+          {/* Desktop Sidebar (hidden on mobile) */}
+          <div className='d-none d-lg-block' style={{ width: "320px", minWidth: "320px" }}>
+            <SidebarContent />
+          </div>
+
+          {/* Mobile Sidebar (Offcanvas) */}
+          <Offcanvas show={showMobileSidebar} onHide={() => setShowMobileSidebar(false)} className="bg-dark text-white border-0" style={{ width: "280px", maxWidth: "80%" }}>
+            <Offcanvas.Header closeButton closeVariant="white" className="border-bottom border-secondary">
+              <Offcanvas.Title className="fs-6">Chat Menu</Offcanvas.Title>
+            </Offcanvas.Header>
+            <Offcanvas.Body className="p-0">
+              <SidebarContent />
+            </Offcanvas.Body>
+          </Offcanvas>
+
+          {/* Chat Area */}
+          <div className='flex-fill d-flex flex-column w-100 position-relative'>
+            {/* Chat Header */}
+            <div className='text-center p-3 p-md-4 border-bottom bg-light d-flex flex-column align-items-center position-relative'>
+              {/* Mobile Sidebar Toggle Button */}
+              <button
+                className="btn btn-link text-dark d-lg-none position-absolute top-0 start-0 m-2 p-2"
+                onClick={() => setShowMobileSidebar(true)}
               >
-                <div className='d-flex justify-content-between align-items-center mb-3'>
-                  <div className='d-flex align-items-center'>
-                    <BsChat className='me-2' size={18} />
-                    <span className='fw-bold'>Chat bot</span>
-                  </div>
-                  <small className='text-muted'>by Nextstep</small>
-                </div>
+                <BsList size={28} />
+              </button>
 
-                <button
-                  className='btn btn-outline-light btn-sm w-100 mb-3 d-flex align-items-center justify-content-center'
-                  onClick={addNewChat}
+              <div className='mb-2 mb-md-3 mt-3 mt-md-0'>
+                <div
+                  className='rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto'
+                  style={{ width: "50px", height: "50px" }}
                 >
-                  <BsPlus className='me-2' />
-                  {t('newChat')}
-                </button>
-
-                {/* Chat Sessions */}
-                <div className='flex-fill overflow-auto'>
-                  {chatSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className={`d-flex justify-content-between align-items-center p-3 rounded mb-2 cursor-pointer ${activeSession === session.id
-                        ? "bg-secondary"
-                        : "bg-transparent hover-bg-secondary"
-                        }`}
-                      onClick={() => setActiveSession(session.id)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <span
-                        className='text-truncate'
-                        style={{ fontSize: "14px" }}
-                      >
-                        {session.name}
-                      </span>
-                      <button
-                        className='btn btn-sm text-white p-0 opacity-75 hover-opacity-100'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteChat(session.id);
-                        }}
-                      >
-                        <BsTrash size={12} />
-                      </button>
-                    </div>
-                  ))}
+                  <BsChat className='text-white' size={20} />
                 </div>
               </div>
+              <h5 className='fw-bold mb-1 fs-6 fs-md-5'>
+                Nextstep Chatbot
+              </h5>
+              <p className='text-muted mb-0 small contact-subtitle d-none d-md-block'>
+                Người Bạn Đồng Hành AI Định Hướng Sự Nghiệp
+              </p>
+              <span className='badge bg-success mt-2'>Online</span>
+            </div>
 
-              {/* Chat Area */}
-              <div className='flex-fill d-flex flex-column'>
-                {/* Chat Header */}
-                <div className='text-center p-4 border-bottom bg-light'>
-                  <div className='mb-3'>
-                    <div
-                      className='rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto'
-                      style={{ width: "60px", height: "60px" }}
-                    >
-                      <BsChat className='text-white' size={24} />
-                    </div>
+            {/* Messages */}
+            <div
+              className='flex-fill p-3 p-md-4 overflow-auto'
+              id='messagesContainer'
+            >
+              {currentSession?.messages.length === 0 ? (
+                // Topic suggestions
+                <div className='text-center py-4 py-md-5'>
+                  <div className='mb-4'>
+                    <span className='bg-light rounded-circle p-3 d-inline-flex fs-4'>
+                      🎯
+                    </span>
                   </div>
-                  <h5 className='fw-bold mb-2'>
-                    Chào mừng bạn đến với Nextstep Chatbot
-                  </h5>
-                  <p className='text-muted mb-0 small'>
-                    Người Bạn Đồng Hành AI Định Hướng Sự Nghiệp Công Nghệ
-                    Của Bạn
-                  </p>
-                  <span className='badge bg-success mt-2'>Marketing</span>
-                </div>
+                  <h4 className='fw-bold mb-3 text-dark fs-5 fs-md-4 px-2'>
+                    {t('welcomeToNextstep')}
+                  </h4>
 
-                {/* Messages */}
-                <div
-                  className='flex-fill p-4 overflow-auto'
-                  id='messagesContainer'
-                >
-                  {currentSession?.messages.length === 0 ? (
-                    // Topic suggestions when no messages
-                    <div className='text-center py-5'>
-                      <div className='mb-4'>
-                        <span className='bg-light rounded-circle p-3 d-inline-flex'>
-                          🎯
-                        </span>
-                      </div>
-                      <h4 className='fw-bold mb-3 text-dark'>
-                        Bạn đang quan tâm đến lĩnh vực nào? Hãy chọn một chủ
-                        đề để mình hỗ trợ bạn.
-                      </h4>
-
-                      <div className='d-flex flex-wrap justify-content-center gap-2 mt-4'>
-                        {topics.map((topic) => (
-                          <button
-                            key={topic.id}
-                            className='btn btn-outline-secondary rounded-pill px-3 py-2 border'
-                            onClick={() => handleTopicSelect(topic)}
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: "500",
-                              transition: "all 0.3s ease",
-                            }}
-                          >
-                            <span className='me-1'>{topic.icon}</span>
-                            {topic.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    // Regular messages
-                    currentSession?.messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`mb-4 d-flex ${message.type === "user"
-                          ? "justify-content-end"
-                          : ""
-                          }`}
+                  <div className='d-flex flex-wrap justify-content-center gap-2 mt-4 px-2'>
+                    {topics.map((topic) => (
+                      <button
+                        key={topic.id}
+                        className='btn btn-outline-secondary rounded-pill px-3 py-2 border'
+                        onClick={() => handleTopicSelect(topic)}
+                        style={{ fontSize: "13px", fontWeight: "500" }}
                       >
-                        <div
-                          className={`d-flex align-items-start ${message.type === "user"
-                            ? "flex-row-reverse"
-                            : ""
-                            }`}
-                          style={{ maxWidth: "85%" }}
-                        >
-                          <div
-                            className={`rounded-circle d-flex align-items-center justify-content-center ${message.type === "user"
-                              ? "ms-3 bg-primary"
-                              : "me-3 bg-light"
-                              }`}
-                            style={{
-                              width: "40px",
-                              height: "40px",
-                              minWidth: "40px",
-                            }}
-                          >
-                            {message.type === "bot" ? (
-                              <BsChat
-                                size={18}
-                                className='text-secondary'
-                              />
-                            ) : (
-                              <div
-                                className='text-white fw-bold'
-                                style={{ fontSize: "14px" }}
-                              >
-                                U
-                              </div>
-                            )}
-                          </div>
-                          <div
-                            className={`${message.type === "user" ? "text-end" : ""
-                              }`}
-                          >
-                            <div
-                              className={`p-3 rounded-4 ${message.type === "user"
-                                ? "bg-primary text-white"
-                                : "bg-light text-dark"
-                                }`}
-                              style={{
-                                whiteSpace: "pre-line",
-                                fontSize: "15px",
-                                lineHeight: "1.5",
-                              }}
-                            >
-                              {message.content}
-                            </div>
-                            <small
-                              className='text-muted d-block mt-2'
-                              style={{ fontSize: "12px" }}
-                            >
-                              {message.time}
-                            </small>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Input Area */}
-                <div className='border-top p-4 bg-light'>
-                  <div className='d-flex align-items-center'>
-                    <button
-                      className='btn btn-outline-secondary btn-sm me-2 d-flex align-items-center justify-content-center'
-                      style={{ width: "40px", height: "40px" }}
-                    >
-                      <BsPaperclip size={16} />
-                    </button>
-                    <div className='flex-fill'>
-                      <input
-                        type='text'
-                        className='form-control form-control-lg'
-                        placeholder="Hỏi tôi bất cứ điều gì..."
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        style={{ fontSize: "16px" }}
-                      />
-                    </div>
-                    <button
-                      className='btn btn-outline-secondary btn-sm mx-2 d-flex align-items-center justify-content-center'
-                      style={{ width: "40px", height: "40px" }}
-                    >
-                      <BsMic size={16} />
-                    </button>
-                    <button
-                      className='btn btn-primary btn-sm d-flex align-items-center justify-content-center'
-                      onClick={handleSendMessage}
-                      disabled={!messageInput.trim()}
-                      style={{ width: "40px", height: "40px" }}
-                    >
-                      <BsSend size={16} />
-                    </button>
+                        <span className='me-1'>{topic.icon}</span>
+                        {topic.name}
+                      </button>
+                    ))}
                   </div>
                 </div>
+              ) : (
+                // Messages list
+                currentSession?.messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`mb-3 mb-md-4 d-flex ${message.type === "user" ? "justify-content-end" : ""}`}
+                  >
+                    <div
+                      className={`d-flex align-items-start ${message.type === "user" ? "flex-row-reverse" : ""}`}
+                      style={{ maxWidth: "90%" }}
+                    >
+                      <div
+                        className={`rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ${message.type === "user" ? "ms-2 ms-md-3 bg-primary" : "me-2 me-md-3 bg-light"}`}
+                        style={{ width: "32px", height: "32px" }}
+                      >
+                        {message.type === "bot" ? (
+                          <BsChat size={14} className='text-secondary' />
+                        ) : (
+                          <div className='text-white fw-bold small'>U</div>
+                        )}
+                      </div>
+                      <div className={`${message.type === "user" ? "text-end" : ""}`}>
+                        <div
+                          className={`p-2 p-md-3 rounded-4 text-start ${message.type === "user" ? "bg-primary text-white" : "bg-light text-dark"}`}
+                          style={{ whiteSpace: "pre-line", fontSize: "14px", lineHeight: "1.5" }}
+                        >
+                          {message.content}
+                        </div>
+                        <small className='text-muted d-block mt-1' style={{ fontSize: "11px" }}>
+                          {message.time}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Input Area */}
+            <div className='border-top p-2 p-md-4 bg-light'>
+              <div className='d-flex align-items-center gap-2'>
+                <button
+                  className='btn btn-outline-secondary btn-sm d-none d-md-flex align-items-center justify-content-center flex-shrink-0'
+                  style={{ width: "40px", height: "40px" }}
+                  title="Attach"
+                >
+                  <BsPaperclip size={16} />
+                </button>
+                <div className='flex-fill'>
+                  <input
+                    type='text'
+                    className='form-control'
+                    placeholder="Nhập tin nhắn..."
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    style={{ fontSize: "16px", height: "40px", borderRadius: "20px" }}
+                  />
+                </div>
+                {/* Mobile: Hide Mic if space is tight, or keep it icon only */}
+                <button
+                  className='btn btn-outline-secondary btn-sm d-none d-md-flex align-items-center justify-content-center flex-shrink-0'
+                  style={{ width: "40px", height: "40px" }}
+                >
+                  <BsMic size={16} />
+                </button>
+                <button
+                  className='btn btn-primary btn-sm d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle'
+                  onClick={handleSendMessage}
+                  disabled={!messageInput.trim()}
+                  style={{ width: "40px", height: "40px" }}
+                >
+                  <BsSend size={16} />
+                </button>
               </div>
             </div>
+
           </div>
         </div>
       </div>
-
-
-      <style>{`
-        .cursor-pointer {
-          cursor: pointer;
-        }
-        .hover-bg-secondary:hover {
-          background-color: rgba(108, 117, 125, 0.2) !important;
-        }
-        .hover-opacity-100:hover {
-          opacity: 1 !important;
-        }
-        .overflow-auto::-webkit-scrollbar {
-          width: 6px;
-        }
-        .overflow-auto::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-        .overflow-auto::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-        .overflow-auto::-webkit-scrollbar-thumb:hover {
-          background: #a1a1a1;
-        }
-        #messagesContainer {
-          scroll-behavior: smooth;
-        }
-      `}</style>
     </>
   );
 }
