@@ -7,7 +7,10 @@ import {
   BsPaperclip,
   BsMic,
   BsSend,
+  BsList,
+  BsX
 } from "react-icons/bs";
+import { Offcanvas } from "react-bootstrap";
 
 function Home() {
   const { t } = useTranslation();
@@ -20,6 +23,7 @@ function Home() {
   ]);
   const [activeSession, setActiveSession] = useState(1);
   const [messageInput, setMessageInput] = useState("");
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false); // Mobile sidebar state
 
   // Available topics
   const topics = [
@@ -157,6 +161,7 @@ function Home() {
     };
     setChatSessions((prev) => [...prev, newSession]);
     setActiveSession(newSession.id);
+    if (window.innerWidth < 992) setShowMobileSidebar(false); // Close sidebar on mobile
   };
 
   const deleteChat = (sessionId) => {
