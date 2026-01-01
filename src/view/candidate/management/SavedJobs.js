@@ -39,59 +39,61 @@ function SavedJobs() {
     <>
       <div className="ms-4 mt-4 px-5 py-3 bg-white">
         <h4 className="mb-4 text-main">Việc làm đã lưu</h4>
-        <table className="table border shadow-sm">
-          <thead className="table-primary">
-            <tr>
-              <th className="fw-500" style={{ width: "26%" }}>
-                Vị trí
-              </th>
-              <th className="fw-500" style={{ width: "26%" }}>
-                Công ty
-              </th>
-              <th className="fw-500" style={{ width: "18%" }}>
-                Địa điểm
-              </th>
-              <th className="fw-500" style={{ width: "14%" }}>
-                Hạn nộp
-              </th>
-              <th className="fw-500">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="ts-smd">
-            {jobs.length > 0 &&
-              jobs.map((item, index) => (
-                <tr key={"saveJob" + item.id}>
-                  <td>{item.jname}</td>
-                  <td>{item.employer.name} </td>
-                  <td>{jobLocations[index]}</td>
-                  <td>{item.deadline} </td>
-                  <td>
-                    <div className="d-flex flex-wrap align-items-center gap-lg-3 gap-1">
-                      {item.is_active === 1 ? (
-                        <Link to={`/jobs/${item.id}`}>
-                          <button className="btn btn-sm btn-outline-primary">
-                            Ứng tuyển
+        <div className="table-responsive">
+          <table className="table border shadow-sm" style={{ minWidth: "800px" }}>
+            <thead className="table-primary">
+              <tr>
+                <th className="fw-500" style={{ width: "26%" }}>
+                  Vị trí
+                </th>
+                <th className="fw-500" style={{ width: "26%" }}>
+                  Công ty
+                </th>
+                <th className="fw-500" style={{ width: "18%" }}>
+                  Địa điểm
+                </th>
+                <th className="fw-500" style={{ width: "14%" }}>
+                  Hạn nộp
+                </th>
+                <th className="fw-500">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="ts-smd">
+              {jobs.length > 0 &&
+                jobs.map((item, index) => (
+                  <tr key={"saveJob" + item.id}>
+                    <td>{item.jname}</td>
+                    <td>{item.employer.name} </td>
+                    <td>{jobLocations[index]}</td>
+                    <td>{item.deadline} </td>
+                    <td>
+                      <div className="d-flex flex-wrap align-items-center gap-lg-3 gap-1">
+                        {item.is_active === 1 ? (
+                          <Link to={`/jobs/${item.id}`}>
+                            <button className="btn btn-sm btn-outline-primary">
+                              Ứng tuyển
+                            </button>
+                          </Link>
+                        ) : (
+                          <button className="btn btn-sm btn-outline-primary disabled">
+                            Đã đóng
                           </button>
-                        </Link>
-                      ) : (
-                        <button className="btn btn-sm btn-outline-primary disabled">
-                          Đã đóng
-                        </button>
-                      )}
-                      <div
-                        className="text-danger bg-white border-0"
-                        data-bs-toggle="modal"
-                        data-bs-target="#jobDeletingModal"
-                        onClick={() => setCurJob(item)}
-                      >
-                        <BsTrash3 className="fs-5" />
+                        )}
+                        <div
+                          className="text-danger bg-white border-0"
+                          data-bs-toggle="modal"
+                          data-bs-target="#jobDeletingModal"
+                          onClick={() => setCurJob(item)}
+                        >
+                          <BsTrash3 className="fs-5" />
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
         {jobs.length === 0 && <h5 className="">Không có bản ghi nào</h5>}
       </div>
       <SavedJobPopup job_id={curJob.id} />

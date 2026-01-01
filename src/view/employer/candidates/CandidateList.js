@@ -136,67 +136,69 @@ function CandidateList() {
             )}
           </Form>
           <div className="mt-3" style={{ width: "90%" }}>
-            <table className="table table-borderless border text-center shadow-sm">
-              <thead className="table-primary ts-smd">
-                <tr>
-                  <th style={{ width: "17%" }}>Họ tên</th>
-                  <th>Vị trí ứng tuyển</th>
-                  <th style={{ width: "15%" }}>Thời gian</th>
-                  <th style={{ width: "12%" }}>Số điện thoại</th>
-                  <th style={{ width: "18%" }}>Email</th>
-                  <th style={{ width: "13%" }}>Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="ts-sm">
-                {candidates.length > 0 &&
-                  candidates.map((item) => (
-                    <tr key={item.jname + item.phone}>
-                      <td>{item.lastname + " " + item.firstname}</td>
-                      <td>{item.jname}</td>
-                      <td>{item.appliedTime}</td>
-                      <td>{item.phone}</td>
-                      <td>{item.email}</td>
-                      <td style={{ fontSize: "17px" }}>
-                        {status !== "PASSED" &&
-                          status !== "RESUME_FAILED" &&
-                          status !== "INTERVIEW_FAILED" ? (
-                          <>
-                            <button
-                              className="border-0 bg-white"
-                              onClick={() =>
-                                handleClickActionBtn(item, "ACCEPT")
-                              }
-                            >
-                              <BsCheckCircle className="text-success" />
-                            </button>
-                            <button
-                              className="border-0 bg-white"
-                              onClick={() =>
-                                handleClickActionBtn(item, "REJECT")
-                              }
-                            >
-                              <BsXCircle className="ms-2 text-danger" />
-                            </button>
-                          </>
-                        ) : null}
-                        <a
-                          className="ms-2"
-                          style={{ textDecoration: "none" }}
-                          href={item.cv_link}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <BsEye
-                            type="button"
-                            className="text-primary"
-                            onClick={() => handleClickActionBtn(item, "VIEWED")}
-                          />
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <div className="table-responsive">
+              <table className="table table-borderless border text-center shadow-sm" style={{ minWidth: "900px" }}>
+                <thead className="table-primary ts-smd">
+                  <tr>
+                    <th style={{ width: "17%" }}>Họ tên</th>
+                    <th>Vị trí ứng tuyển</th>
+                    <th style={{ width: "15%" }}>Thời gian</th>
+                    <th style={{ width: "12%" }}>Số điện thoại</th>
+                    <th style={{ width: "18%" }}>Email</th>
+                    <th style={{ width: "13%" }}>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="ts-sm">
+                  {candidates.length > 0 &&
+                    candidates.map((item) => (
+                      <tr key={item.jname + item.phone}>
+                        <td>{item.lastname + " " + item.firstname}</td>
+                        <td>{item.jname}</td>
+                        <td>{item.appliedTime}</td>
+                        <td>{item.phone}</td>
+                        <td>{item.email}</td>
+                        <td style={{ fontSize: "17px" }}>
+                          {status !== "PASSED" &&
+                            status !== "RESUME_FAILED" &&
+                            status !== "INTERVIEW_FAILED" ? (
+                            <>
+                              <button
+                                className="border-0 bg-white"
+                                onClick={() =>
+                                  handleClickActionBtn(item, "ACCEPT")
+                                }
+                              >
+                                <BsCheckCircle className="text-success" />
+                              </button>
+                              <button
+                                className="border-0 bg-white"
+                                onClick={() =>
+                                  handleClickActionBtn(item, "REJECT")
+                                }
+                              >
+                                <BsXCircle className="ms-2 text-danger" />
+                              </button>
+                            </>
+                          ) : null}
+                          <a
+                            className="ms-2"
+                            style={{ textDecoration: "none" }}
+                            href={item.cv_link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <BsEye
+                              type="button"
+                              className="text-primary"
+                              onClick={() => handleClickActionBtn(item, "VIEWED")}
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
             {candidates.length === 0 && (
               <h5 className="">Không có bản ghi nào</h5>
             )}

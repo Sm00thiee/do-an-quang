@@ -1,11 +1,43 @@
 @media screen and (min-width: 992px) {
     .menu-part {
         width: 20%;
-        height: 100vh;        
+        height: 100vh;
     }
+
     .content-part {
         width: 80%;
         height: 100vh;
         overflow-y: auto;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .menu-part {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        background-color: white;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        border-bottom: 1px solid #ddd;
+        /* Hide scrollbar for cleaner look */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .menu-part::-webkit-scrollbar {
+        display: none;
+    }
+
+    .menu-part>div {
+        display: inline-block;
+        padding: 10px 15px;
+        flex-shrink: 0;
+    }
+
+    .content-part {
+        width: 100%;
+        padding-top: 10px;
     }
 }

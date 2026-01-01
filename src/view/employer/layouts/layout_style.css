@@ -1,14 +1,47 @@
 @media screen and (min-width: 992px) {
     .menu-part {
         width: 20%;
-        height: 100vh;        
+        height: 100vh;
     }
+
     .content-part {
         width: 80%;
         height: 100vh;
         overflow-y: auto;
     }
 }
+
+@media screen and (max-width: 991px) {
+    .menu-part {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        background-color: white;
+        position: sticky;
+        top: 55px;
+        /* Adjust based on Navbar height */
+        z-index: 990;
+        border-bottom: 1px solid #ddd;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .menu-part::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Prevent flex items from shrinking */
+    .menu-part>div {
+        flex-shrink: 0;
+        padding: 8px 16px;
+    }
+
+    .content-part {
+        width: 100%;
+        padding-bottom: 60px;
+    }
+}
+
 .page-body {
     background-color: #eceff2dd;
 }

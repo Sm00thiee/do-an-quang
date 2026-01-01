@@ -105,63 +105,59 @@ function JobManagement() {
               Tạo mới
             </button>
           </div>
-          <table className="table border text-center shadow-sm" style={{ width: "93%" }}>
-            <thead className="table-primary ts-smd">
-              <tr>
-                <th style={{ width: "25%" }}>Tên</th>
-                <th style={{ width: "13%" }}>Hình thức</th>
-                <th style={{ width: "13%" }}>Cấp bậc</th>
-                <th style={{ width: "15%" }}>Thời gian đăng</th>
-                <th style={{ width: "13%" }}>Thời hạn</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody style={{ fontSize: "14px" }}>
-              {jobs.length > 0 &&
-                jobs.map((item, index) => (
-                  <tr key={"job" + item.id}>
-                    <td>{item.jname}</td>
-                    <td>{item.jtype_name}</td>
-                    <td>{item.jlevel_name} </td>
-                    <td>{item.postTime}</td>
-                    <td>{item.deadline}</td>
-                    <td>
-                      <div className="form-check form-switch">
-                        <input
-                          type="checkbox"
-                          className="form-check-input mx-auto"
-                          name="status[]"
-                          defaultChecked={item.is_active === 1 ? true : false}
-                          onClick={() =>
-                            handleClickSwitchBtn({
-                              job_id: item.id,
-                              status: 1 - item.is_active,
-                              index: index,
-                            })
-                          }
+          <div className="table-responsive" style={{ width: "100%" }}>
+            <table className="table border text-center shadow-sm" style={{ minWidth: "900px" }}>
+              <thead className="table-primary ts-smd">
+                <tr>
+                  <th style={{ width: "25%" }}>Tên</th>
+                  <th style={{ width: "13%" }}>Hình thức</th>
+                  <th style={{ width: "13%" }}>Cấp bậc</th>
+                  <th style={{ width: "15%" }}>Thời gian đăng</th>
+                  <th style={{ width: "13%" }}>Thời hạn</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody style={{ fontSize: "14px" }}>
+                {jobs.length > 0 &&
+                  jobs.map((item, index) => (
+                    <tr key={"job" + item.id}>
+                      <td>{item.jname}</td>
+                      <td>{item.jtype_name}</td>
+                      <td>{item.jlevel_name} </td>
+                      <td>{item.postTime}</td>
+                      <td>{item.deadline}</td>
+                      <td>
+                        <div className="form-check form-switch">
+                          <input
+                            type="checkbox"
+                            className="form-check-input mx-auto"
+                            name="status[]"
+                            defaultChecked={item.is_active === 1 ? true : false}
+                            onClick={() =>
+                              handleClickSwitchBtn({
+                                job_id: item.id,
+                                status: 1 - item.is_active,
+                                index: index,
+                              })
+                            }
+                          />
+                        </div>
+                      </td>
+                      <td style={{ fontSize: "17px" }}>
+                        <BsEye
+                          className="text-primary"
+                          style={{ cursor: "pointer" }}
+                          data-bs-toggle="modal"
+                          data-bs-target="#jobDetail"
+                          onClick={() => handleClickActBtn(item)}
                         />
-                      </div>
-                    </td>
-                    <td style={{ fontSize: "17px" }}>
-                      <BsEye
-                        className="text-primary"
-                        style={{ cursor: "pointer" }}
-                        data-bs-toggle="modal"
-                        data-bs-target="#jobDetail"
-                        onClick={() => handleClickActBtn(item)}
-                      />
-                      {/* <BsTrash3
-                      className="ms-2 text-danger"
-                      style={{ cursor: "pointer" }}
-                      data-bs-toggle="modal"
-                      data-bs-target="#jobDeleting"
-                    /> */}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
           {jobs.length === 0 && <h5>Không có bản ghi nào</h5>}
           <JobDetail
             inf={curJob}
