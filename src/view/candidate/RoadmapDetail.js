@@ -1,0 +1,493 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+    BsCheckCircleFill,
+    BsCircle,
+    BsArrowLeft,
+    BsDownload,
+    BsEye,
+    BsExclamationCircle
+} from "react-icons/bs";
+import { toast } from "react-toastify";
+import roadmapApi from "../../api/roadmap";
+import "./Roadmap.css";
+import RoadmapPDFViewer from "./RoadmapPDFViewer";
+
+function RoadmapDetail() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [expandedNodes, setExpandedNodes] = useState([]);
+    const [isPDFViewerOpen, setIsPDFViewerOpen] = useState(false);
+    const [roadmapData, setRoadmapData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // Check if user is logged in
+    useEffect(() => {
+        const token = localStorage.getItem('candidate_jwt');
+        setIsLoggedIn(!!token);
+    }, []);
+
+    // Fetch roadmap data
+    useEffect(() => {
+        const fetchRoadmap = async () => {
+            const token = localStorage.getItem('candidate_jwt');
+
+            // If demo roadmap or not logged in, use mock data
+            if (id?.startsWith('demo-') || !token) {
+                setRoadmapData(getMockRoadmapData());
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await roadmapApi.getRoadmapById(id);
+
+                if (response.success && response.data) {
+                    // Transform API data to component format
+                    const transformedData = transformApiData(response.data);
+                    setRoadmapData(transformedData);
+                }
+            } catch (err) {
+                console.error('Error fetching roadmap:', err);
+                setError('Không thể tải lộ trình. Vui lòng thử lại.');
+                // Fallback to mock data
+                setRoadmapData(getMockRoadmapData());
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRoadmap();
+    }, [id]);
+
+    // Transform API data to component format
+    const transformApiData = (apiData) => {
+        const sections = apiData.roadmap_sections || [];
+
+        return {
+            id: apiData.id,
+            title: apiData.title,
+            description: apiData.description,
+            createdAt: new Date(apiData.created_at).toLocaleDateString('vi-VN'),
+            progress: apiData.progress || 0,
+            category: apiData.category,
+            status: apiData.status,
+            nodes: sections
+                .sort((a, b) => a.order_index - b.order_index)
+                .map((section, index) => {
+                    const lessons = section.roadmap_lessons || [];
+                    const completedLessons = lessons.filter(l => l.status === 'completed').length;
+
+                    // Determine section status
+                    let sectionStatus = 'pending';
+                    if (completedLessons === lessons.length && lessons.length > 0) {
+                        sectionStatus = 'completed';
+                    } else if (completedLessons > 0) {
+                        sectionStatus = 'in-progress';
+                    }
+
+                    return {
+                        id: section.id,
+                        title: section.title,
+                        level: getLevelFromIndex(index),
+                        duration: getDurationEstimate(lessons.length),
+                        status: section.status || sectionStatus,
+                        color: section.color,
+                        skills: lessons.flatMap(lesson =>
+                            (lesson.roadmap_skills || []).map(skill => skill.name)
+                        ),
+                        resources: lessons.flatMap(lesson =>
+                            (lesson.roadmap_resources || []).map(resource => resource.title)
+                        ),
+                        lessons: lessons.map(lesson => ({
+                            id: lesson.id,
+                            title: lesson.title,
+                            status: lesson.status,
+                            content: lesson.content
+                        }))
+                    };
+                })
+        };
+    };
+
+    // Helper functions
+    const getLevelFromIndex = (index) => {
+        const levels = ['Beginner', 'Beginner-Intermediate', 'Intermediate', 'Advanced', 'Senior'];
+        return levels[Math.min(index, levels.length - 1)];
+    };
+
+    const getDurationEstimate = (lessonCount) => {
+        if (lessonCount <= 2) return '1-2 tháng';
+        if (lessonCount <= 4) return '2-3 tháng';
+        if (lessonCount <= 6) return '3-4 tháng';
+        return '4-6 tháng';
+    };
+
+    // Mock data for demo
+    const getMockRoadmapData = () => ({
+        id: 1,
+        title: "Lộ trình Marketing Digital",
+        description: "Lộ trình phát triển sự nghiệp từ Junior đến Senior Marketing",
+        createdAt: "01/01/2026",
+        progress: 30,
+        nodes: [
+            {
+                id: "1",
+                title: "Nền tảng Marketing Cơ bản",
+                level: "Beginner",
+                duration: "2-3 tháng",
+                status: "completed",
+                skills: [
+                    "Marketing Mix (4P)",
+                    "Consumer Behavior",
+                    "Market Research",
+                    "Brand Positioning",
+                ],
+                resources: [
+                    "Khóa học Marketing Foundation",
+                    "Sách Philip Kotler",
+                ],
+            },
+            {
+                id: "2",
+                title: "Digital Marketing Fundamentals",
+                level: "Beginner-Intermediate",
+                duration: "3-4 tháng",
+                status: "in-progress",
+                skills: [
+                    "SEO/SEM Basics",
+                    "Google Analytics",
+                    "Social Media Marketing",
+                    "Email Marketing",
+                ],
+                resources: [
+                    "Google Digital Garage",
+                    "HubSpot Academy",
+                ],
+            },
+            {
+                id: "3",
+                title: "Advanced Digital Marketing",
+                level: "Intermediate",
+                duration: "4-6 tháng",
+                status: "pending",
+                skills: [
+                    "Google Ads Mastery",
+                    "Facebook Ads",
+                    "Content Strategy",
+                    "Marketing Automation",
+                ],
+                resources: [
+                    "Google Ads Certification",
+                    "Facebook Blueprint",
+                ],
+            },
+            {
+                id: "4",
+                title: "Data-Driven Marketing",
+                level: "Advanced",
+                duration: "3-4 tháng",
+                status: "pending",
+                skills: [
+                    "Google Tag Manager",
+                    "A/B Testing",
+                    "Marketing Analytics",
+                    "Customer Journey Mapping",
+                ],
+                resources: [
+                    "Google Analytics Advanced",
+                    "Data Analysis courses",
+                ],
+            },
+            {
+                id: "5",
+                title: "Marketing Leadership",
+                level: "Senior",
+                duration: "6-12 tháng",
+                status: "pending",
+                skills: [
+                    "Team Management",
+                    "Budget Planning",
+                    "Strategic Marketing",
+                    "Growth Hacking",
+                ],
+                resources: [
+                    "Leadership Training",
+                    "Business Strategy courses",
+                ],
+            },
+        ],
+    });
+
+    // Transform nodes to PDF sections format
+    const getPdfData = () => {
+        if (!roadmapData) return null;
+
+        return {
+            title: roadmapData.title,
+            subtitle: roadmapData.description,
+            createdDate: roadmapData.createdAt,
+            sections: roadmapData.nodes.map(node => ({
+                id: node.id,
+                title: node.title,
+                lessons: [
+                    {
+                        id: `${node.id}.1`,
+                        title: `Kỹ năng cần đạt được - ${node.level}`,
+                        content: [
+                            {
+                                heading: "Các kỹ năng chính",
+                                description: `Thời gian học: ${node.duration}`,
+                                items: node.skills.map(skill => ({
+                                    title: skill,
+                                    description: "Kỹ năng cần thiết cho giai đoạn này"
+                                }))
+                            },
+                            {
+                                heading: "Tài nguyên học tập",
+                                description: "Các nguồn tài liệu được đề xuất:",
+                                items: node.resources.map(resource => ({
+                                    title: resource,
+                                    description: "Tài liệu tham khảo chất lượng cao"
+                                }))
+                            }
+                        ]
+                    }
+                ]
+            }))
+        };
+    };
+
+    const toggleNode = (nodeId) => {
+        setExpandedNodes((prev) =>
+            prev.includes(nodeId)
+                ? prev.filter((id) => id !== nodeId)
+                : [...prev, nodeId]
+        );
+    };
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case "completed":
+                return <BsCheckCircleFill className="status-icon completed" />;
+            case "in-progress":
+                return <BsCheckCircleFill className="status-icon in-progress" />;
+            default:
+                return <BsCircle className="status-icon pending" />;
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case "completed":
+                return "Hoàn thành";
+            case "in-progress":
+                return "Đang học";
+            default:
+                return "Chưa bắt đầu";
+        }
+    };
+
+    const handleViewPDF = () => {
+        setIsPDFViewerOpen(true);
+    };
+
+    const handleClosePDF = () => {
+        setIsPDFViewerOpen(false);
+    };
+
+    const handleMarkComplete = async (nodeId) => {
+        if (!isLoggedIn) {
+            toast.warning('Vui lòng đăng nhập để lưu tiến độ');
+            return;
+        }
+
+        try {
+            // Find the node and its first lesson
+            const node = roadmapData.nodes.find(n => n.id === nodeId);
+            if (node?.lessons?.[0]) {
+                await roadmapApi.updateLessonStatus(node.lessons[0].id, 'completed');
+
+                // Update local state
+                setRoadmapData(prev => ({
+                    ...prev,
+                    nodes: prev.nodes.map(n =>
+                        n.id === nodeId
+                            ? { ...n, status: 'completed' }
+                            : n
+                    )
+                }));
+
+                toast.success('Đã đánh dấu hoàn thành!');
+            }
+        } catch (err) {
+            console.error('Error marking complete:', err);
+            toast.error('Không thể cập nhật. Vui lòng thử lại.');
+        }
+    };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="roadmap-detail-container">
+                <div className="loading-state">
+                    <div className="loading-spinner"></div>
+                    <p>Đang tải lộ trình...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error && !roadmapData) {
+        return (
+            <div className="roadmap-detail-container">
+                <div className="error-state">
+                    <BsExclamationCircle size={48} />
+                    <h3>Không thể tải lộ trình</h3>
+                    <p>{error}</p>
+                    <button onClick={() => navigate('/roadmap')}>Quay lại danh sách</button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!roadmapData) return null;
+
+    return (
+        <div className="roadmap-detail-container">
+            {/* Header */}
+            <div className="roadmap-detail-header">
+                <button className="back-btn" onClick={() => navigate("/roadmap")}>
+                    <BsArrowLeft size={20} />
+                    <span>Quay lại</span>
+                </button>
+                <div className="header-content">
+                    <h1 className="roadmap-title">{roadmapData.title}</h1>
+                    <p className="roadmap-description">{roadmapData.description}</p>
+                    <div className="roadmap-meta">
+                        <span className="meta-item">
+                            📅 Tạo ngày: {roadmapData.createdAt}
+                        </span>
+                        <span className="meta-item">
+                            📊 Tiến độ: {roadmapData.progress}%
+                        </span>
+                    </div>
+                </div>
+                <div className="header-actions">
+                    <button className="view-pdf-btn" onClick={handleViewPDF}>
+                        <BsEye size={18} />
+                        <span>Xem PDF</span>
+                    </button>
+                    <button className="export-btn" onClick={handleViewPDF}>
+                        <BsDownload size={18} />
+                        <span>Xuất PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="roadmap-progress-bar">
+                <div className="progress-track">
+                    <div
+                        className="progress-fill"
+                        style={{ width: `${roadmapData.progress}%` }}
+                    />
+                </div>
+                <span className="progress-label">{roadmapData.progress}% hoàn thành</span>
+            </div>
+
+            {/* Roadmap Timeline */}
+            <div className="roadmap-timeline">
+                {roadmapData.nodes.map((node, index) => (
+                    <div key={node.id} className="timeline-node-wrapper">
+                        {/* Connecting Line */}
+                        {index < roadmapData.nodes.length - 1 && (
+                            <div className="timeline-connector" />
+                        )}
+
+                        {/* Node Card */}
+                        <div
+                            className={`timeline-node ${node.status} ${expandedNodes.includes(node.id) ? "expanded" : ""
+                                }`}
+                            onClick={() => toggleNode(node.id)}
+                        >
+                            <div className="node-header">
+                                <div className="node-status-indicator">
+                                    {getStatusIcon(node.status)}
+                                </div>
+                                <div className="node-main-info">
+                                    <h3 className="node-title">{node.title}</h3>
+                                    <div className="node-badges">
+                                        <span className="badge badge-level">{node.level}</span>
+                                        <span className="badge badge-duration">⏱ {node.duration}</span>
+                                        <span className={`badge badge-status ${node.status}`}>
+                                            {getStatusLabel(node.status)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Expanded Content */}
+                            {expandedNodes.includes(node.id) && (
+                                <div className="node-expanded-content">
+                                    <div className="node-section">
+                                        <h4 className="section-title">Kỹ năng cần đạt được:</h4>
+                                        <ul className="skills-list">
+                                            {node.skills.map((skill, idx) => (
+                                                <li key={idx} className="skill-item">
+                                                    <span className="skill-bullet">✓</span>
+                                                    {skill}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <div className="node-section">
+                                        <h4 className="section-title">Tài nguyên học tập:</h4>
+                                        <ul className="resources-list">
+                                            {node.resources.map((resource, idx) => (
+                                                <li key={idx} className="resource-item">
+                                                    <span className="resource-icon">📚</span>
+                                                    {resource}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    <div className="node-actions">
+                                        <button className="btn-primary">Bắt đầu học</button>
+                                        {node.status !== 'completed' && (
+                                            <button
+                                                className="btn-secondary"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleMarkComplete(node.id);
+                                                }}
+                                            >
+                                                Đánh dấu hoàn thành
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* PDF Viewer Modal */}
+            <RoadmapPDFViewer
+                isOpen={isPDFViewerOpen}
+                onClose={handleClosePDF}
+                roadmapData={getPdfData()}
+            />
+        </div>
+    );
+}
+
+export default RoadmapDetail;

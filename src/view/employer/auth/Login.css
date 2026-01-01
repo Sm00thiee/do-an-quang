@@ -1,0 +1,558 @@
+/* ====================================
+   Employer Login - Camap Design System
+   Desktop: 2 columns (Carousel + Form)
+   Mobile: Form only
+   ==================================== */
+
+:root {
+    --primary: #0066FF;
+    --primary-light: #EFF5FF;
+    --primary-dark: #0052CC;
+    --text-dark: #101828;
+    --text-medium: #475467;
+    --text-light: #667085;
+    --border: #E4E7EC;
+    --bg-page: #F9FAFB;
+    --bg-input: #F9FAFB;
+    --error: #DC2626;
+    --radius: 10px;
+}
+
+/* ====================================
+   PAGE LAYOUT
+   ==================================== */
+.employer-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-page);
+    padding: 24px;
+}
+
+.login-wrapper {
+    display: flex;
+    max-width: 950px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(16, 24, 40, 0.1);
+}
+
+/* ====================================
+   LEFT PANEL - CAROUSEL (Desktop Only)
+   ==================================== */
+.left-panel {
+    flex: 0 0 45%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.panel-content {
+    text-align: center;
+    color: white;
+    max-width: 100%;
+    width: 100%;
+}
+
+.slide-image {
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    margin-bottom: 24px;
+    filter: brightness(1.05);
+    transition: opacity 0.5s ease;
+    object-fit: contain;
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.slide-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.slide-desc {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ====================================
+   RIGHT PANEL - FORM
+   ==================================== */
+.right-panel {
+    flex: 1;
+    padding: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lang-pos {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 360px;
+}
+
+/* Logo */
+.logo-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.logo-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+/* Title */
+.form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-align: center;
+    margin: 0 0 6px 0;
+}
+
+.form-subtitle {
+    font-size: 14px;
+    color: var(--text-medium);
+    text-align: center;
+    margin: 0 0 24px 0;
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.req {
+    color: var(--error);
+}
+
+/* Input */
+.input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-box>i:first-child {
+    position: absolute;
+    left: 14px;
+    color: var(--text-light);
+    font-size: 15px;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    background: var(--bg-input);
+    transition: all 0.2s ease;
+}
+
+.input-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.input-box input::placeholder {
+    color: var(--text-light);
+}
+
+.toggle-eye {
+    position: absolute;
+    right: 14px;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.toggle-eye:hover {
+    color: var(--primary);
+}
+
+/* Error */
+.error-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--error);
+}
+
+.error-text i {
+    font-size: 12px;
+}
+
+/* Options */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.remember-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-medium);
+    cursor: pointer;
+}
+
+.remember-check input {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+}
+
+.forgot-link {
+    font-size: 13px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* Error Box */
+.error-box {
+    padding: 10px 14px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    color: var(--error);
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Submit */
+.submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: var(--primary-dark);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Register */
+.register-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-medium);
+    margin: 20px 0 16px 0;
+}
+
+.register-text a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.register-text a:hover {
+    text-decoration: underline;
+}
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.divider span {
+    font-size: 12px;
+    color: var(--text-light);
+    text-transform: uppercase;
+}
+
+/* Switch Button */
+.switch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.switch-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.switch-btn i {
+    font-size: 14px;
+}
+
+/* ====================================
+   RESPONSIVE - MOBILE
+   Hide carousel, show only form
+   ==================================== */
+
+@media (max-width: 768px) {
+    .employer-login-page {
+        padding: 16px;
+    }
+
+    .login-wrapper {
+        flex-direction: column;
+        border-radius: 16px;
+    }
+
+    /* Hide carousel on mobile */
+    .left-panel {
+        display: none;
+    }
+
+    .right-panel {
+        padding: 32px 24px;
+    }
+
+    .lang-pos {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 100;
+    }
+
+    .form-wrapper {
+        max-width: 100%;
+    }
+
+    .form-title {
+        font-size: 22px;
+    }
+
+    .form-subtitle {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .employer-login-page {
+        padding: 0;
+        align-items: flex-start;
+    }
+
+    .login-wrapper {
+        min-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .right-panel {
+        padding: 60px 20px 32px 20px;
+        align-items: flex-start;
+    }
+
+    .logo-area {
+        margin-bottom: 20px;
+    }
+
+    .logo-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
+
+    .logo-name {
+        font-size: 20px;
+    }
+
+    .form-title {
+        font-size: 20px;
+    }
+
+    .form-subtitle {
+        margin-bottom: 20px;
+    }
+
+    .login-form {
+        gap: 14px;
+    }
+
+    .input-box input {
+        padding: 11px 14px 11px 40px;
+    }
+
+    .submit-btn {
+        padding: 11px;
+    }
+
+    .register-text {
+        margin: 16px 0 14px 0;
+        font-size: 13px;
+    }
+
+    .switch-btn {
+        padding: 11px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .right-panel {
+        padding: 56px 16px 24px 16px;
+    }
+
+    .options-row {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .forgot-link {
+        align-self: flex-end;
+    }
+}
+
+/* Landscape mobile */
+@media (max-height: 600px) and (max-width: 768px) {
+    .employer-login-page {
+        align-items: flex-start;
+    }
+
+    .right-panel {
+        padding-top: 48px;
+    }
+
+    .logo-area {
+        margin-bottom: 16px;
+    }
+
+    .form-subtitle {
+        margin-bottom: 16px;
+    }
+
+    .login-form {
+        gap: 12px;
+    }
+
+    .register-text {
+        margin: 12px 0;
+    }
+}

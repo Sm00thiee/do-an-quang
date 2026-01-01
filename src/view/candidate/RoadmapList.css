@@ -1,0 +1,725 @@
+/* ====================================
+   Roadmap List Page - Camap Design System
+   Colors, Typography, Spacing from Figma
+   ==================================== */
+
+/* CSS Variables - Design Tokens */
+:root {
+    /* Colors */
+    --bg-page: #F9FAFB;
+    --bg-white: #FFFFFF;
+    --bg-item: #F2F4F7;
+    --bg-badge-light: #EFF5FF;
+
+    --text-primary: #101828;
+    --text-secondary: #475467;
+    --text-tertiary: #667085;
+
+    --border-color: #E4E7EC;
+    --border-light: #EAECF0;
+
+    --primary-blue: #0066FF;
+    --primary-blue-light: #EFF5FF;
+
+    --success-green: #10B981;
+    --warning-orange: #F59E0B;
+    --purple: #8B5CF6;
+    --pink: #EC4899;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+    --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+    --shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+
+    /* Spacing */
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+    --spacing-3xl: 60px;
+}
+
+/* Page Container */
+.roadmap-list-container {
+    min-height: 100vh;
+    background-color: var(--bg-page);
+    padding: var(--spacing-3xl);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header Section */
+.roadmap-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Create Button */
+.create-roadmap-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 12px 20px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.create-roadmap-btn:hover {
+    background-color: #0052CC;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* Roadmap Cards Container */
+.roadmap-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Roadmap Card */
+.roadmap-card {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.roadmap-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.roadmap-card.expanded {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Card Header */
+.roadmap-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.roadmap-card-header:hover {
+    background-color: var(--bg-page);
+}
+
+.roadmap-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.roadmap-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.roadmap-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roadmap-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.roadmap-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.expand-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    border-radius: var(--radius-full);
+    transition: all 0.2s ease;
+}
+
+.roadmap-card-header:hover .expand-icon {
+    background-color: var(--bg-item);
+    color: var(--text-primary);
+}
+
+/* Card Content (Expanded) */
+.roadmap-card-content {
+    padding: 0 var(--spacing-lg) var(--spacing-lg);
+    border-top: 1px solid var(--border-light);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Central Hub Badge */
+.roadmap-hub {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-lg) 0;
+    position: relative;
+}
+
+.hub-badge {
+    padding: 12px 24px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+}
+
+/* Two Column Layout */
+.roadmap-columns {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    position: relative;
+}
+
+.roadmap-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+/* Column Section */
+.column-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    position: relative;
+}
+
+.column-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.column-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.column-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Column Items */
+.column-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-left: 44px;
+}
+
+.roadmap-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-item);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.roadmap-item:hover {
+    background-color: var(--bg-badge-light);
+    transform: translateX(4px);
+    border-left-color: var(--primary-blue);
+}
+
+.item-arrow {
+    color: var(--primary-blue);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* Connector Lines - Center Column */
+.column-connector {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    position: relative;
+    min-height: 100%;
+}
+
+.connector-svg {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 100%;
+    min-height: 400px;
+}
+
+/* Add dotted line connectors using CSS pseudo-elements */
+.column-connector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: repeating-linear-gradient(to bottom,
+            var(--primary-blue) 0px,
+            var(--primary-blue) 5px,
+            transparent 5px,
+            transparent 10px);
+    opacity: 0.5;
+}
+
+/* Final Step */
+.final-step {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    background-color: var(--bg-page);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-color);
+}
+
+.final-step-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.final-number {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+}
+
+.final-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.final-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding-left: 40px;
+}
+
+.final-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+/* Card Actions */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-light);
+}
+
+.view-detail-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 12px 24px;
+    background-color: transparent;
+    color: var(--primary-blue);
+    border: 2px solid var(--primary-blue);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-detail-btn:hover {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .roadmap-list-container {
+        padding: var(--spacing-lg);
+    }
+
+    .roadmap-columns {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .column-connector {
+        display: none;
+    }
+
+    .roadmap-column {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .roadmap-list-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .page-title {
+        font-size: 24px;
+    }
+
+    .roadmap-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .roadmap-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .column-items {
+        padding-left: 0;
+    }
+
+    .final-items {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .roadmap-list-container {
+        padding: var(--spacing-md);
+    }
+
+    .roadmap-card-header {
+        padding: var(--spacing-md);
+    }
+
+    .roadmap-card-content {
+        padding: 0 var(--spacing-md) var(--spacing-md);
+    }
+}
+
+/* ========================================
+   New States & Components
+   ======================================== */
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: var(--spacing-md);
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-state p {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Error Message */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: #FEE2E2;
+    border: 1px solid #FECACA;
+    border-radius: var(--radius-md);
+    color: #DC2626;
+    font-size: 14px;
+}
+
+.error-message svg {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* Login Prompt */
+.login-prompt {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    max-width: 1200px;
+    margin: 0 auto var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--bg-badge-light);
+    border: 1px solid var(--primary-blue);
+    border-radius: var(--radius-md);
+    color: var(--primary-blue);
+    font-size: 14px;
+}
+
+.login-prompt svg {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.login-prompt button {
+    margin-left: auto;
+    padding: 8px 16px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.login-prompt button:hover {
+    background-color: #0052CC;
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: var(--spacing-md);
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 64px;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Progress Bar Mini (in card header) */
+.roadmap-progress-mini {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: 8px;
+}
+
+.progress-bar-mini {
+    width: 120px;
+    height: 6px;
+    background-color: var(--bg-item);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progress-fill-mini {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.progress-text-mini {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Card Header Actions */
+.card-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.card-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background-color: var(--bg-item);
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background-color: var(--bg-badge-light);
+    color: var(--primary-blue);
+}
+
+.card-action-btn.delete:hover {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+.card-action-btn.edit:hover {
+    background-color: #DBEAFE;
+    color: #2563EB;
+}
+
+/* Completed Item Style */
+.roadmap-item.completed {
+    background-color: #D1FAE5;
+    border-left-color: var(--success-green);
+}
+
+.roadmap-item.completed .item-arrow {
+    color: var(--success-green);
+}
+
+/* Responsive adjustments for new components */
+@media (max-width: 768px) {
+    .login-prompt {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .login-prompt button {
+        margin-left: 0;
+        margin-top: var(--spacing-sm);
+    }
+
+    .card-header-actions {
+        flex-wrap: wrap;
+    }
+
+    .roadmap-progress-mini {
+        width: 100%;
+    }
+
+    .progress-bar-mini {
+        flex: 1;
+        width: auto;
+    }
+}

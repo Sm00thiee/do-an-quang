@@ -1,0 +1,499 @@
+/* ====================================
+   PDF Viewer Modal - Camap Design System
+   ==================================== */
+
+/* Overlay */
+.pdf-viewer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Container */
+.pdf-viewer-container {
+    width: 100%;
+    max-width: 1000px;
+    max-height: 90vh;
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Header */
+.pdf-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E4E7EC;
+    flex-shrink: 0;
+}
+
+.pdf-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pdf-icon {
+    font-size: 24px;
+    color: #0066FF;
+}
+
+.pdf-title-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pdf-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #101828;
+    margin: 0;
+}
+
+.pdf-subtitle {
+    font-size: 13px;
+    color: #475467;
+    margin: 0;
+}
+
+.pdf-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #F2F4F7;
+    border: none;
+    border-radius: 8px;
+    color: #475467;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pdf-action-btn:hover {
+    background: #E4E7EC;
+    color: #101828;
+}
+
+.pdf-action-btn.primary {
+    background: #0066FF;
+    color: white;
+}
+
+.pdf-action-btn.primary:hover {
+    background: #0052CC;
+}
+
+.pdf-action-btn svg {
+    font-size: 16px;
+}
+
+.zoom-level {
+    min-width: 45px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475467;
+}
+
+.pdf-divider {
+    width: 1px;
+    height: 24px;
+    background: #E4E7EC;
+    margin: 0 8px;
+}
+
+.pdf-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #667085;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.pdf-close-btn:hover {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+/* Content Area */
+.pdf-viewer-content {
+    flex: 1;
+    overflow: auto;
+    background: #F9FAFB;
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Document Styling */
+.pdf-document {
+    width: 100%;
+    max-width: 800px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 48px;
+    transform-origin: top center;
+    transition: transform 0.2s ease;
+}
+
+/* Document Header */
+.document-header {
+    text-align: center;
+    padding-bottom: 32px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid #E4E7EC;
+}
+
+.document-logo {
+    margin-bottom: 16px;
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #0066FF 0%, #00C2FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.document-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #101828;
+    margin: 0 0 8px 0;
+}
+
+.document-subtitle {
+    font-size: 16px;
+    color: #475467;
+    margin: 0 0 16px 0;
+}
+
+.document-meta {
+    font-size: 14px;
+    color: #667085;
+}
+
+/* Document Sections */
+.document-body {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.document-section {
+    margin-bottom: 24px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #EFF5FF;
+    border-radius: 12px;
+    border-left: 4px solid #0066FF;
+}
+
+.section-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #0066FF;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0066FF;
+    margin: 0;
+}
+
+/* Lessons */
+.document-lesson {
+    margin-bottom: 24px;
+    padding-left: 16px;
+    border-left: 2px solid #E4E7EC;
+}
+
+.lesson-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.lesson-check {
+    font-size: 18px;
+    color: #10B981;
+    flex-shrink: 0;
+}
+
+.lesson-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #101828;
+    margin: 0;
+}
+
+/* Lesson Content */
+.lesson-content {
+    padding-left: 28px;
+}
+
+.content-block {
+    margin-bottom: 20px;
+}
+
+.content-heading {
+    font-size: 15px;
+    font-weight: 600;
+    color: #101828;
+    margin: 0 0 8px 0;
+}
+
+.content-description {
+    font-size: 14px;
+    color: #475467;
+    line-height: 1.6;
+    margin: 0 0 12px 0;
+}
+
+.content-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.content-item {
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 12px 16px;
+    background: #F9FAFB;
+    border-radius: 8px;
+    border-left: 3px solid #0066FF;
+}
+
+.content-item strong {
+    color: #101828;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.content-item span {
+    color: #475467;
+}
+
+/* Document Footer */
+.document-footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #E4E7EC;
+    text-align: center;
+}
+
+.document-footer p {
+    font-size: 12px;
+    color: #667085;
+    margin: 4px 0;
+}
+
+/* Navigation Footer */
+.pdf-viewer-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 24px;
+    background: #FFFFFF;
+    border-top: 1px solid #E4E7EC;
+    flex-shrink: 0;
+}
+
+.page-navigation {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.page-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #F2F4F7;
+    border: none;
+    border-radius: 8px;
+    color: #475467;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+    background: #0066FF;
+    color: white;
+}
+
+.page-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 14px;
+    font-weight: 500;
+    color: #475467;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pdf-viewer-overlay {
+        padding: 10px;
+    }
+
+    .pdf-viewer-container {
+        max-height: 95vh;
+    }
+
+    .pdf-viewer-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .pdf-header-left {
+        width: 100%;
+    }
+
+    .pdf-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .pdf-action-btn span {
+        display: none;
+    }
+
+    .pdf-viewer-content {
+        padding: 16px;
+    }
+
+    .pdf-document {
+        padding: 24px;
+    }
+
+    .document-title {
+        font-size: 22px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .lesson-content {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .pdf-title {
+        font-size: 14px;
+    }
+
+    .pdf-subtitle {
+        display: none;
+    }
+
+    .pdf-document {
+        padding: 16px;
+    }
+
+    .document-header {
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+    }
+
+    .document-title {
+        font-size: 18px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .lesson-title {
+        font-size: 14px;
+    }
+}

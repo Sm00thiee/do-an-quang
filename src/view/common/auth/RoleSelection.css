@@ -1,0 +1,368 @@
+/* ====================================
+   Role Selection Page Styles
+   ==================================== */
+
+.role-selection-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 40px 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Background Decorations */
+.decoration-circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.circle-1 {
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    top: -200px;
+    right: -200px;
+}
+
+.circle-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    bottom: -150px;
+    left: -150px;
+}
+
+.circle-3 {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    top: 50%;
+    left: 10%;
+}
+
+/* Language Switcher Position */
+.language-wrapper {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 100;
+}
+
+/* Main Content */
+.role-content {
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+/* Header Section */
+.role-header {
+    margin-bottom: 48px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+}
+
+.logo-text {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.main-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 12px 0;
+}
+
+.main-subtitle {
+    font-size: 18px;
+    color: #64748b;
+    margin: 0;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Role Cards */
+.role-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.role-card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    text-align: left;
+}
+
+.role-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.role-card.hovering {
+    border-color: var(--role-color);
+}
+
+.role-card.selected {
+    border-color: var(--role-color);
+    background: linear-gradient(180deg, white 0%, rgba(var(--role-color-rgb), 0.05) 100%);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1),
+        0 0 0 4px rgba(var(--role-color-rgb), 0.15);
+}
+
+/* Selection Indicator */
+.selection-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.radio-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.radio-circle.checked {
+    background: var(--role-gradient);
+    border-color: var(--role-color);
+    color: white;
+    font-size: 14px;
+}
+
+/* Card Icon */
+.card-icon-wrapper {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+    font-size: 36px;
+}
+
+/* Card Title & Subtitle */
+.card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.card-subtitle {
+    font-size: 15px;
+    color: #64748b;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+/* Features List */
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #475569;
+}
+
+.feature-item i {
+    font-size: 16px;
+}
+
+/* Continue Button */
+.continue-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 48px;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+    border: none;
+    border-radius: 16px;
+    cursor: not-allowed;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.continue-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+}
+
+.continue-btn.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5);
+}
+
+.continue-btn i {
+    transition: transform 0.2s ease;
+}
+
+.continue-btn.active:hover i {
+    transform: translateX(4px);
+}
+
+/* Login Link */
+.login-link {
+    margin-top: 32px;
+    font-size: 15px;
+    color: #64748b;
+}
+
+.login-link span {
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.login-link span:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .role-selection-container {
+        padding: 20px;
+    }
+
+    .role-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .main-title {
+        font-size: 28px;
+    }
+
+    .main-subtitle {
+        font-size: 16px;
+    }
+
+    .role-card {
+        padding: 24px;
+    }
+
+    .card-icon-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    .card-icon {
+        font-size: 28px;
+    }
+
+    .card-title {
+        font-size: 20px;
+    }
+
+    .continue-btn {
+        width: 100%;
+        padding: 14px 32px;
+    }
+
+    .language-wrapper {
+        top: 16px;
+        right: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-section {
+        margin-bottom: 24px;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .logo-text {
+        font-size: 24px;
+    }
+
+    .main-title {
+        font-size: 24px;
+    }
+
+    .role-header {
+        margin-bottom: 32px;
+    }
+
+    .card-subtitle {
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+
+    .features-list {
+        gap: 8px;
+    }
+
+    .feature-item {
+        font-size: 13px;
+    }
+}
