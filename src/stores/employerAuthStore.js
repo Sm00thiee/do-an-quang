@@ -4,12 +4,15 @@ import { persist } from 'zustand/middleware';
 export const useEmployerAuthStore = create(
   persist(
     (set) => ({
-      current: {},
+      user: null,
       isAuth: false,
-      
-      setUser: (user) => set({ current: user, isAuth: true }),
-      
-      logout: () => set({ current: {}, isAuth: false }),
+
+      setUser: (user) => set({ user, isAuth: true }),
+
+      logout: () => {
+        localStorage.removeItem('employer_jwt');
+        set({ user: null, isAuth: false });
+      },
     }),
     {
       name: 'employer-auth-storage',
