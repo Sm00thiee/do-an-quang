@@ -9,8 +9,6 @@ import clsx from "clsx";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import { useCandidateAuthStore } from "../../../stores/candidateAuthStore";
 
-const user_icon = process.env.PUBLIC_URL + "/image/user_icon.png";
-
 function Layout(props) {
   const { t } = useTranslation();
   const nav = useNavigate();
@@ -60,27 +58,19 @@ function Layout(props) {
                 </div>
               ) : (
                 <div className="d-flex flex-lg-row flex-column align-items-lg-center gap-3">
-
-
-                  {/* User Menu */}
-                  <div className="dropdown">
-                    <div className="d-flex align-items-center gap-2 pointer dropdown-toggle" data-bs-toggle="dropdown">
-                      <img
-                        src={user_icon}
-                        alt="user"
-                        style={{ width: "32px", height: "32px" }}
-                        className="rounded-circle border"
-                      />
-                      <span className="fw-500 text-secondary">
-                        {candidate.name && candidate.name.firstname}
-                      </span>
-                    </div>
-                    <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
-                      <li><Link className="dropdown-item py-2" to="/candidate">{t('account')}</Link></li>
-                      <li><hr className="dropdown-divider" /></li>
-                      <li><button type="button" className="dropdown-item py-2 text-danger" onClick={handleLogout}>{t('logout')}</button></li>
-                    </ul>
-                  </div>
+                  {/* Logout Button */}
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={handleLogout}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontWeight: "500"
+                    }}
+                  >
+                    {t('logout')}
+                  </button>
                 </div>
               )}
             </div>
