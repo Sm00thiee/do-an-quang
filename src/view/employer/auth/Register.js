@@ -62,8 +62,21 @@ function Register() {
 
         try {
             await authApi.register(data);
-            toast.success(t('registerSuccess'));
-            nav("/employer/login");
+            toast.success(t('registerSuccess'), {
+                position: "top-right",
+                autoClose: 3000
+            });
+
+            // Email verification reminder
+            toast.info('Vui lòng kiểm tra email để xác thực tài khoản!', {
+                position: "top-right",
+                autoClose: 5000,
+                toastId: 'employer-email-verification'
+            });
+
+            setTimeout(() => {
+                nav("/employer/login");
+            }, 2000);
         } catch (error) {
             console.error(error);
             setMsg(t('registerFailed'));

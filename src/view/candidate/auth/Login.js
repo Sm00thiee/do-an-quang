@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import authApi from "../../../api/auth";
 import { useCandidateAuthStore } from "../../../stores/candidateAuthStore";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
@@ -86,7 +87,10 @@ function Login() {
       }
 
       // Show success message
-      alert(t('loginSuccess'));
+      toast.success(t('loginSuccess'), {
+        position: "top-right",
+        autoClose: 2000
+      });
 
       // Navigation
       navigate("/");

@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import authApi from "../../../api/auth";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 
@@ -76,22 +77,23 @@ function Signup() {
       const response = await authApi.register(userData);
       console.log('Signup response:', response);
 
-      // Hiển thị thông báo thành công
-      const signupInfo = `
-Đăng ký thành công!
+      // Show success toast with email verification message
+      toast.success('Đăng ký thành công!', {
+        position: "top-right",
+        autoClose: 3000
+      });
 
-Thông tin tài khoản:
-📧 Email: ${userData.email}
-👤 Tên: ${userData.firstName} ${userData.lastName}
-📱 SĐT: ${userData.phone}
-🏷️ Role: Candidate
+      // Show email verification reminder
+      toast.info('Vui lòng kiểm tra email để xác thực tài khoản!', {
+        position: "top-right",
+        autoClose: 5000,
+        toastId: 'email-verification'
+      });
 
-Vui lòng đăng nhập để tiếp tục!
-      `;
-      alert(signupInfo);
-
-      // Chuyển hướng về trang login
-      navigate("/login");
+      // Navigate to login after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
       console.error('Signup error:', error);
       setIsError(true);
