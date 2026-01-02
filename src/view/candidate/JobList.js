@@ -207,10 +207,10 @@ function JobList() {
         <div className="container">
           <div className="hero-content">
             <h1 className="hero-title">
-              Tìm việc làm <span className="highlight">phù hợp</span> với bạn
+              {t('findJobsTitle')}
             </h1>
             <p className="hero-subtitle">
-              Hơn 100,000+ việc làm đang chờ bạn khám phá
+              {t('discoverJobs')}
             </p>
 
             {/* Search Bar */}
@@ -220,7 +220,7 @@ function JobList() {
                   <BsSearch className="search-icon" />
                   <input
                     type="text"
-                    placeholder="Tìm kiếm công việc, vị trí..."
+                    placeholder={t('searchPlaceholder')}
                     className="search-input"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
@@ -234,7 +234,7 @@ function JobList() {
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                   >
-                    <option value="">Tất cả địa điểm</option>
+                    <option value="">{t('selectLocation')}</option>
                     <option value="Hà Nội">Hà Nội</option>
                     <option value="Hồ Chí Minh">Hồ Chí Minh</option>
                     <option value="Đà Nẵng">Đà Nẵng</option>
@@ -242,7 +242,7 @@ function JobList() {
                   </select>
                 </div>
                 <button type="submit" className="search-btn">
-                  Tìm kiếm
+                  {t('search')}
                 </button>
               </div>
             </form>
@@ -271,7 +271,7 @@ function JobList() {
           {/* Sidebar Filters */}
           <aside className={`filters-sidebar ${showFilters ? "open" : ""}`}>
             <div className="filters-header">
-              <h3>Bộ lọc</h3>
+              <h3>{t('filter')}</h3>
               <button
                 className="filter-toggle-mobile"
                 onClick={() => setShowFilters(!showFilters)}
@@ -282,7 +282,7 @@ function JobList() {
 
             {/* Salary Range */}
             <div className="filter-section">
-              <h4>Mức lương</h4>
+              <h4>{t('selectSalary')}</h4>
               <div className="salary-range">
                 <input
                   type="range"
@@ -293,15 +293,15 @@ function JobList() {
                   className="range-slider"
                 />
                 <div className="range-values">
-                  <span>0 triệu</span>
-                  <span>{salaryRange[1]} triệu</span>
+                  <span>0 {t('million')}</span>
+                  <span>{salaryRange[1]} {t('million')}</span>
                 </div>
               </div>
             </div>
 
             {/* Experience Level */}
             <div className="filter-section">
-              <h4>Kinh nghiệm</h4>
+              <h4>{t('selectExperience')}</h4>
               <div className="checkbox-group">
                 {["0-1", "1-2", "2-3", "3-5", "5+"].map((exp) => (
                   <label key={exp} className="checkbox-label">
@@ -310,7 +310,7 @@ function JobList() {
                       checked={experienceFilter.includes(exp)}
                       onChange={() => toggleExperienceFilter(exp)}
                     />
-                    <span>{exp} năm</span>
+                    <span>{exp} {t('years')}</span>
                   </label>
                 ))}
               </div>
@@ -318,7 +318,7 @@ function JobList() {
 
             {/* Job Type */}
             <div className="filter-section">
-              <h4>Loại hình công việc</h4>
+              <h4>{t('selectJobType')}</h4>
               <div className="checkbox-group">
                 {["Full-time", "Part-time", "Remote", "Contract"].map((type) => (
                   <label key={type} className="checkbox-label">
@@ -345,7 +345,7 @@ function JobList() {
                 setSelectedCategory("all");
               }}
             >
-              Xóa bộ lọc
+              {t('clearFilter')}
             </button>
           </aside>
 
@@ -354,13 +354,13 @@ function JobList() {
             {/* Results Header */}
             <div className="results-header">
               <h2 className="results-count">
-                {filteredJobs.length} việc làm phù hợp
+                {filteredJobs.length} {t('jobsFound')}
               </h2>
               <button
                 className="filter-toggle-btn"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <BsSearch /> Bộ lọc
+                <BsSearch /> {t('filter')}
               </button>
             </div>
 
@@ -439,8 +439,8 @@ function JobList() {
             {filteredJobs.length === 0 && (
               <div className="no-results">
                 <div className="no-results-icon">🔍</div>
-                <h3>Không tìm thấy việc làm phù hợp</h3>
-                <p>Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+                <h3>{t('noJobsFound')}</h3>
+                <p>{t('tryChangeKeywords')}</p>
               </div>
             )}
           </div>

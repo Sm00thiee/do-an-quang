@@ -75,24 +75,18 @@ function Login() {
       const response = await authApi.login(user);
       console.log('Login response:', response);
 
-      // Hiển thị thông tin đăng nhập thành công
-      const loginInfo = `
-${t('loginSuccess')}
+      // Store token from session (backend returns session.access_token)
+      if (response.session && response.session.access_token) {
+        localStorage.setItem("candidate_jwt", response.session.access_token);
+      }
 
-${t('email')}: ${user.email}
-User ID: ${response.user?.id || 'N/A'}
-Role: Candidate (${user.role})
-Token: ${response.authorization?.token ? 'Yes' : 'No'}
-      `;
-      alert(loginInfo);
-
-      // Lưu thông tin user và token
+      // Store user info
       if (response.user) {
         useCandidateAuthStore.getState().setCurrentCandidate(response.user);
       }
-      if (response.authorization?.token) {
-        localStorage.setItem("candidate_jwt", response.authorization.token);
-      }
+
+      // Show success message
+      alert(t('loginSuccess'));
 
       // Navigation
       navigate("/");

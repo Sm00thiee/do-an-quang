@@ -15,7 +15,11 @@ import CandidatesManagement from "./view/admin/candidates/CandidatesManagement";
 import CandidatesContact from "./view/admin/candidates/CandidatesContact";
 import EmployersManagement from "./view/admin/employers/EmployersManagement";
 import CandidateList from "./view/employer/candidates/CandidateList";
+import CandidateManagement from "./view/employer/candidates/CandidateManagement";
 import JobManagement from "./view/employer/jobs/JobManagement";
+import RecruitmentManagement from "./view/employer/jobs/RecruitmentManagement";
+import JobCreate from "./view/employer/jobs/JobCreate";
+import CompanySettings from "./view/employer/company/CompanySettings";
 import CandidateLayout from "./view/candidate/management/layouts/CandidateLayout";
 import AppliedJobs from "./view/candidate/management/AppliedJobs";
 import SavedJobs from "./view/candidate/management/SavedJobs";
@@ -88,8 +92,11 @@ function App() {
             element={
               <EmployerLayout>
                 <Routes>
-                  <Route path="candidates" element={<CandidateList />} />
-                  <Route path="jobs" element={<JobManagement />} />
+                  <Route index element={<RecruitmentManagement />} />
+                  <Route path="candidates" element={<CandidateManagement />} />
+                  <Route path="jobs" element={<RecruitmentManagement />} />
+                  <Route path="jobs/create" element={<JobCreate />} />
+                  <Route path="company" element={<CompanySettings />} />
                 </Routes>
               </EmployerLayout>
             }

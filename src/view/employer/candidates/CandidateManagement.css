@@ -1,0 +1,254 @@
+/* Candidate Management Styles - Matching Figma Design */
+
+.candidate-container {
+    background: transparent;
+    padding: 0;
+}
+
+.candidate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.candidate-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+/* Table Container */
+.candidates-table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.candidates-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.candidates-table thead th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #666;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.candidates-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s;
+}
+
+.candidates-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.candidates-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.candidates-table tbody td {
+    padding: 1.25rem 1.5rem;
+    font-size: 0.95rem;
+    color: #333;
+    vertical-align: middle;
+}
+
+/* Candidate Name Cell */
+.candidate-name-cell {
+    font-weight: 600;
+    color: #2F80ED;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.candidate-name-cell:hover {
+    color: #1a6fd8;
+    text-decoration: underline;
+}
+
+/* Status Badge */
+.candidate-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.candidate-status-badge.new {
+    background: #FFF3CD;
+    color: #856404;
+}
+
+.candidate-status-badge.approved {
+    background: #D4EDDA;
+    color: #155724;
+}
+
+.candidate-status-badge.rejected {
+    background: #F8D7DA;
+    color: #721C24;
+}
+
+/* Action Buttons */
+.candidate-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.candidate-action-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #2F80ED;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2F80ED;
+}
+
+.candidate-action-btn:hover {
+    background: #2F80ED;
+    color: white;
+}
+
+.candidate-action-btn svg {
+    font-size: 0.95rem;
+}
+
+.candidate-action-btn.delete {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.candidate-action-btn.delete:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Empty State */
+.candidate-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.candidate-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+.candidate-empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.candidate-empty-description {
+    font-size: 0.95rem;
+    color: #666;
+}
+
+/* Loading */
+.candidate-loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem;
+}
+
+.candidate-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top-color: #2F80ED;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pagination */
+.candidate-pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #f0f0f0;
+    background: white;
+}
+
+.candidate-pagination-info {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.candidate-pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.candidate-pagination-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.75rem;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.candidate-pagination-btn:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+.candidate-pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.candidate-pagination-btn.active {
+    background: #2F80ED;
+    color: white;
+    border-color: #2F80ED;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .candidates-table-container {
+        overflow-x: auto;
+    }
+
+    .candidates-table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .candidate-pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

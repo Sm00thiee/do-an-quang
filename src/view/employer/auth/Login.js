@@ -61,13 +61,25 @@ function Login() {
 
     try {
       const res = await authApi.login(inf);
-      localStorage.setItem("employer_jwt", res.authorization.token);
-      toast.success(t('loginSuccess'));
+      console.log('Login response:', res); // Debug log
 
-      const userRes = await authApi.getMe(2);
-      useEmployerAuthStore.getState().setUser(userRes);
-      nav("/employer");
+      // Backend returns session object with access_token
+      if (res.session && res.session.access_token) {
+        localStorage.setItem("employer_jwt", res.session.access_token);
+
+        // Store user info from login response
+        if (res.user) {
+          useEmployerAuthStore.getState().setUser(res.user);
+        }
+
+        toast.success(t('loginSuccess'));
+        nav("/employer");
+      } else {
+        console.error('No access token in response');
+        setMsg('Lỗi xác thực. Vui lòng thử lại.');
+      }
     } catch (error) {
+      console.error('Login error:', error);
       setMsg(t('loginFailed'));
     } finally {
       setIsLoading(false);
