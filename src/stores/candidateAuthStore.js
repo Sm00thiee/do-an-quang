@@ -9,7 +9,10 @@ export const useCandidateAuthStore = create(
       
       setCurrentCandidate: (user) => set({ current: user, isAuth: true }),
       
-      logout: () => set({ current: {}, isAuth: false }),
+      logout: () => {
+        set({ current: {}, isAuth: false });
+        localStorage.removeItem('candidate-auth-storage');
+      },
     }),
     {
       name: 'candidate-auth-storage',

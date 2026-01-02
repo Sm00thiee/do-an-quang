@@ -29,16 +29,16 @@ function CandidateManagement() {
         { id: 13, name: 'Đinh Tuấn Kiệt', email: 'dinhkiet@example.com', phone: '0901234568', position: 'System Admin', status: 'approved', appliedDate: '2024-01-03' },
         { id: 14, name: 'Ngô Lan Anh', email: 'ngoanh@example.com', phone: '0912345679', position: 'Content Writer', status: 'new', appliedDate: '2024-01-02' },
         { id: 15, name: 'Võ Đức Thắng', email: 'vothang@example.com', phone: '0923456780', position: 'Sales Executive', status: 'rejected', appliedDate: '2024-01-01' },
-        { id: 16, name: 'Cao Thị Hạnh', email: 'caohanh@example.com', phone: '0934567891', position: 'HR Manager', status: 'approved', appliedDate: '2023-12-31' },
-        { id: 17, name: 'Dương Minh Quân', email: 'duongquan@example.com', phone: '0945678902', position: 'Business Analyst', status: 'new', appliedDate: '2023-12-30' },
-        { id: 18, name: 'Tô Thị Lan', email: 'tolan@example.com', phone: '0956789013', position: 'Graphic Designer', status: 'new', appliedDate: '2023-12-29' },
-        { id: 19, name: 'Mai Hoàng Long', email: 'mailong@example.com', phone: '0967890124', position: 'Network Engineer', status: 'approved', appliedDate: '2023-12-28' },
-        { id: 20, name: 'Phan Văn Hải', email: 'phanhai@example.com', phone: '0978901235', position: 'Security Specialist', status: 'new', appliedDate: '2023-12-27' },
-        { id: 21, name: 'Lâm Thị Xuân', email: 'lamxuan@example.com', phone: '0989012346', position: 'Project Coordinator', status: 'rejected', appliedDate: '2023-12-26' },
-        { id: 22, name: 'Chu Minh Hải', email: 'chuhai@example.com', phone: '0990123457', position: 'Software Tester', status: 'approved', appliedDate: '2023-12-25' },
-        { id: 23, name: 'Quách Thị Hoa', email: 'quachhoa@example.com', phone: '0901234569', position: 'Customer Support', status: 'new', appliedDate: '2023-12-24' },
-        { id: 24, name: 'Tăng Văn Phong', email: 'tangphong@example.com', phone: '0912345670', position: 'SEO Specialist', status: 'new', appliedDate: '2023-12-23' },
-        { id: 25, name: 'Huỳnh Thị Ngọc', email: 'huynhngoc@example.com', phone: '0923456781', position: 'Social Media Manager', status: 'approved', appliedDate: '2023-12-22' }
+        { id: 16, name: 'Cao Thị Hạnh', email: 'caohanh@example.com', phone: '0934567891', position: 'HR Manager', status: 'approved', appliedDate: '2026-12-31' },
+        { id: 17, name: 'Dương Minh Quân', email: 'duongquan@example.com', phone: '0945678902', position: 'Business Analyst', status: 'new', appliedDate: '2026-12-30' },
+        { id: 18, name: 'Tô Thị Lan', email: 'tolan@example.com', phone: '0956789013', position: 'Graphic Designer', status: 'new', appliedDate: '2026-12-29' },
+        { id: 19, name: 'Mai Hoàng Long', email: 'mailong@example.com', phone: '0967890124', position: 'Network Engineer', status: 'approved', appliedDate: '2026-12-28' },
+        { id: 20, name: 'Phan Văn Hải', email: 'phanhai@example.com', phone: '0978901235', position: 'Security Specialist', status: 'new', appliedDate: '2026-12-27' },
+        { id: 21, name: 'Lâm Thị Xuân', email: 'lamxuan@example.com', phone: '0989012346', position: 'Project Coordinator', status: 'rejected', appliedDate: '2026-12-26' },
+        { id: 22, name: 'Chu Minh Hải', email: 'chuhai@example.com', phone: '0990123457', position: 'Software Tester', status: 'approved', appliedDate: '2026-12-25' },
+        { id: 23, name: 'Quách Thị Hoa', email: 'quachhoa@example.com', phone: '0901234569', position: 'Customer Support', status: 'new', appliedDate: '2026-12-24' },
+        { id: 24, name: 'Tăng Văn Phong', email: 'tangphong@example.com', phone: '0912345670', position: 'SEO Specialist', status: 'new', appliedDate: '2026-12-23' },
+        { id: 25, name: 'Huỳnh Thị Ngọc', email: 'huynhngoc@example.com', phone: '0923456781', position: 'Social Media Manager', status: 'approved', appliedDate: '2026-12-22' }
     ];
 
     // Calculate pagination

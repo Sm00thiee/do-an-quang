@@ -108,7 +108,10 @@ const styles = {
     color: '#333',
     fontSize: '0.95rem',
     fontWeight: 500,
-    background: 'white'
+    background: 'white',
+    border: 'none',
+    width: '100%',
+    textAlign: 'left'
   },
   dropdownItemLogout: {
     display: 'flex',
@@ -120,7 +123,10 @@ const styles = {
     fontSize: '0.95rem',
     fontWeight: 500,
     background: 'white',
-    color: '#dc3545'
+    color: '#dc3545',
+    border: 'none',
+    width: '100%',
+    textAlign: 'left'
   },
   divider: {
     height: '1px',
@@ -267,7 +273,7 @@ function EmployerLayout({ children }) {
 
             {showDropdown && (
               <div style={styles.dropdown}>
-                <div
+                <button
                   style={getHoverStyle(styles.dropdownItem, hoverItem === 'company')}
                   onMouseEnter={() => setHoverItem('company')}
                   onMouseLeave={() => setHoverItem(null)}
@@ -278,9 +284,9 @@ function EmployerLayout({ children }) {
                 >
                   <BsPerson />
                   <span>Thông tin công ty</span>
-                </div>
+                </button>
                 <div style={styles.divider}></div>
-                <div
+                <button
                   style={hoverItem === 'logout'
                     ? { ...styles.dropdownItemLogout, background: '#fff5f5' }
                     : styles.dropdownItemLogout
@@ -291,7 +297,7 @@ function EmployerLayout({ children }) {
                 >
                   <BsBoxArrowRight />
                   <span>Đăng xuất</span>
-                </div>
+                </button>
               </div>
             )}
           </div>

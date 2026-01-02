@@ -13,7 +13,8 @@ import {
     BsTools,
     BsTrash,
     BsPencil,
-    BsExclamationCircle
+    BsExclamationCircle,
+    BsInfoCircle
 } from "react-icons/bs";
 import { toast } from "react-toastify";
 import roadmapApi from "../../api/roadmap";

@@ -1,14 +1,9 @@
 import "bootstrap/dist/js/bootstrap.js";
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
-import { BsBell, BsFillCircleFill } from "react-icons/bs";
+import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./layout.css";
-import authApi from "../../../api/auth";
-import candMsgApi from "../../../api/candidateMessage";
-import Pusher from "pusher-js";
-import BellDialog from "./BellDialog";
-import { Navbar, Nav, Container, Row, Col, Stack } from "react-bootstrap";
+import { Navbar, Nav, Container, Row, Col } from "react-bootstrap";
 import { AppContext } from "../../../App";
 import clsx from "clsx";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
@@ -19,12 +14,6 @@ const user_icon = process.env.PUBLIC_URL + "/image/user_icon.png";
 function Layout(props) {
   const { t } = useTranslation();
   const nav = useNavigate();
-  const [bellMsgs, setBellMsgs] = useState([]);
-  const [msgStyles, setMsgStyles] = useState([]);
-  const [hasNew, setHasNew] = useState(false);
-  const [showBellDialog, setShowBellDialog] = useState(false);
-  const [showListMsg, setShowListMsg] = useState(false);
-  const [curNotification, setCurNotification] = useState({});
   const { currentPage, setCurrentPage } = useContext(AppContext);
 
   const candidate = useCandidateAuthStore(state => state.current);
@@ -33,61 +22,13 @@ function Layout(props) {
   const handleLogout = () => {
     useCandidateAuthStore.getState().logout();
     localStorage.removeItem("candidate_jwt");
-    nav("/");
+    nav("/login");
   };
 
-  const getAllMessages = async () => {
-    const res = await candMsgApi.getMsgs(candidate.id);
-    console.log("bell msgs:", res);
-    setBellMsgs(res);
-  };
 
-  const handleReadMsg = async (inf) => {
-    setShowBellDialog(true);
-    setCurNotification(inf);
-    // update read status
-    if (inf.isRead === 0) {
-      await candMsgApi.markAsRead(inf.id);
-      getAllMessages();
-    }
-  };
-
-  useEffect(() => {
-    if (isAuth && candidate.id) {
-
-      // Pusher configuration
-      const pusher = new Pusher("a2b7b5a1cb8e6d17b7a0", {
-        cluster: "ap1",
-      });
-      const channel = pusher.subscribe("nextstep");
-      channel.bind("sendJobMsg", function (data) {
-        console.log("pusher sending data: ", data);
-        setHasNew(true);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuth]);
-
-  useEffect(() => {
-    if (bellMsgs.length > 0) {
-      const msgCss = [];
-      bellMsgs.forEach((item) => {
-        if (item.isRead === 0) {
-          msgCss.push(" text-primary fw-600");
-        } else msgCss.push("");
-      });
-      setMsgStyles(msgCss);
-      console.log("msgCss:", msgCss);
-    }
-  }, [bellMsgs]);
 
   return (
     <>
-      <BellDialog
-        show={showBellDialog}
-        setShow={setShowBellDialog}
-        current={curNotification}
-      />
       <Navbar bg="white" expand="lg" fixed="top" className="shadow-sm border-bottom py-2">
         <Container fluid="lg">
           <Navbar.Brand as={Link} to="/" onClick={() => setCurrentPage("home")}>
@@ -96,14 +37,6 @@ function Layout(props) {
 
           <div className="d-flex align-items-center gap-2 d-lg-none">
             {!isAuth && <LanguageSwitcher />}
-            {isAuth && (
-              <div className="position-relative" onClick={() => setShowListMsg(!showListMsg)}>
-                <BsBell className="fs-4 pointer text-secondary" />
-                {hasNew && (
-                  <BsFillCircleFill className="text-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle" style={{ fontSize: "8px" }} />
-                )}
-              </div>
-            )}
             <Navbar.Toggle aria-controls="main-navbar" className="border-0 p-1" />
           </div>
 
@@ -124,44 +57,10 @@ function Layout(props) {
                   <Link to="/login" className="text-decoration-none text-secondary">{t('login')}</Link>
                   <div className="vr d-none d-lg-block"></div>
                   <Link to="/signup" className="text-decoration-none text-secondary">{t('signup')}</Link>
-                  <a href="/employer/login" className="btn btn-info text-white fw-500">{t('forEmployers')}</a>
                 </div>
               ) : (
                 <div className="d-flex flex-lg-row flex-column align-items-lg-center gap-3">
-                  {/* Desktop Notification */}
-                  <div className="position-relative d-none d-lg-block" onMouseLeave={() => setShowListMsg(false)}>
-                    <BsBell
-                      className="fs-4 pointer text-secondary"
-                      onClick={() => setShowListMsg(!showListMsg)}
-                    />
-                    {hasNew && <BsFillCircleFill className="bell-icon" />}
 
-                    {/* Message List Dropdown */}
-                    <div
-                      className={clsx(
-                        "position-absolute bg-white rounded z-index-1 msg-list fw-normal shadow end-0 mt-2",
-                        showListMsg ? "d-block" : "d-none"
-                      )}
-                      style={{ width: "300px", maxHeight: "400px", overflowY: "auto" }}
-                    >
-                      {bellMsgs.length > 0 ? (
-                        bellMsgs.map((item, index) => (
-                          <div
-                            key={"bell_msg" + index}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => handleReadMsg(item)}
-                            className={
-                              "text-wrap px-3 py-2 border-bottom hover-bg-light " + (item.isRead === 0 ? "fw-bold text-primary bg-light" : "text-secondary")
-                            }
-                          >
-                            {item.name}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-3 text-center text-muted">{t('noNotifications')}</div>
-                      )}
-                    </div>
-                  </div>
 
                   {/* User Menu */}
                   <div className="dropdown">

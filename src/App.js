@@ -46,14 +46,17 @@ function App() {
       <ToastContainer autoClose={500} position="bottom-right" />
       <BrowserRouter>
         <Routes>
+          {/* Candidate authentication routes - without Layout (no header) */}
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+
+          {/* Main candidate routes - with Layout (has header) */}
           <Route
             path="*"
             element={
               <Layout>
                 <Routes>
                   <Route exact path="" element={<Home />} />
-                  <Route path="login" element={<Login />} />
-                  <Route path="signup" element={<Signup />} />
                   <Route path="companies" element={<CompanyList />} />
                   <Route path="contact" element={<Contact />} />
                   <Route path="companies/:id" element={<Company />} />
@@ -87,6 +90,8 @@ function App() {
               </Layout>
             }
           />
+
+          {/* Employer routes */}
           <Route
             path="employer/*"
             element={
@@ -104,6 +109,8 @@ function App() {
           <Route path="get-started" element={<RoleSelection />} />
           <Route path="employer/login" element={<EmployerLogin />} />
           <Route path="employer/register" element={<EmployerRegister />} />
+
+          {/* Admin routes */}
           <Route
             path="admin/*"
             element={

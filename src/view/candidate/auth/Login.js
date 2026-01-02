@@ -249,6 +249,24 @@ function Login() {
                         <a href="/signup" className="text-primary fw-semibold text-decoration-none">{t('registerNow')}</a>
                       </div>
                     </form>
+
+                    {/* Employer options - moved inside the card */}
+                    <div className="mt-4 pt-4 border-top">
+                      <div className="text-center">
+                        <a
+                          href="/employer/login"
+                          className="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center"
+                          style={{
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            transition: "all 0.3s ease"
+                          }}
+                        >
+                          <i className="fas fa-building me-2"></i>
+                          <span>{t('loginAsEmployer')}</span>
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -256,8 +274,7 @@ function Login() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>  );
 }
 
 export default Login;

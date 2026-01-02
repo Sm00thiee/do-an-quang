@@ -288,6 +288,32 @@
     margin: 0;
 }
 
+/* Column Info Button */
+.column-info-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--primary-blue);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.column-info-btn:hover {
+    background-color: var(--primary-blue-light);
+    transform: scale(1.1);
+}
+
+.column-info-btn svg {
+    font-size: 16px;
+}
+
 /* Column Items */
 .column-items {
     display: flex;

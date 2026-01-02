@@ -1,15 +1,10 @@
 import "bootstrap/dist/js/bootstrap.js";
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
-import { BsBell, BsFillCircleFill } from "react-icons/bs";
+import { useContext, useState } from "react";
 import "./layout.css";
 import { useDispatch, useSelector } from "react-redux";
-import authApi from "../../../../../api/auth";
-import candMsgApi from "../../../../../api/candidateMessage";
 import { candAuthActions } from "../../../../../redux/slices/candAuthSlice";
 import Login from "../auth/Login";
-import Pusher from "pusher-js";
-import BellDialog from "./BellDialog";
 import Stack from "react-bootstrap/Stack";
 import { AppContext } from "../../../../App";
 import clsx from "clsx";
@@ -18,12 +13,6 @@ const user_icon = process.env.PUBLIC_URL + "/image/user_icon.png";
 
 function Layout(props) {
   const nav = useNavigate();
-  const [bellMsgs, setBellMsgs] = useState([]);
-  const [msgStyles, setMsgStyles] = useState([]);
-  const [hasNew, setHasNew] = useState(false);
-  const [showBellDialog, setShowBellDialog] = useState(false);
-  const [showListMsg, setShowListMsg] = useState(false);
-  const [curNotification, setCurNotification] = useState({});
   const { currentPage, setCurrentPage } = useContext(AppContext);
 
   const dispatch = useDispatch();
@@ -36,58 +25,9 @@ function Layout(props) {
     nav("/");
   };
 
-  const getAllMessages = async () => {
-    const res = await candMsgApi.getMsgs(candidate.id);
-    console.log("bell msgs:", res);
-    setBellMsgs(res);
-  };
-
-  const handleReadMsg = async (inf) => {
-    setShowBellDialog(true);
-    setCurNotification(inf);
-    // update read status
-    if (inf.isRead === 0) {
-      await candMsgApi.markAsRead(inf.id);
-      getAllMessages();
-    }
-  };
-
-  useEffect(() => {
-    if (isAuth && candidate.id) {
-
-      // Pusher configuration
-      const pusher = new Pusher("a2b7b5a1cb8e6d17b7a0", {
-        cluster: "ap1",
-      });
-      const channel = pusher.subscribe("nextstep");
-      channel.bind("sendJobMsg", function (data) {
-        console.log("pusher sending data: ", data);
-        setHasNew(true);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuth]);
-
-  useEffect(() => {
-    if (bellMsgs.length > 0) {
-      const msgCss = [];
-      bellMsgs.forEach((item) => {
-        if (item.isRead === 0) {
-          msgCss.push(" text-primary fw-600");
-        } else msgCss.push("");
-      });
-      setMsgStyles(msgCss);
-      console.log("msgCss:", msgCss);
-    }
-  }, [bellMsgs]);
 
   return (
     <>
-      <BellDialog
-        show={showBellDialog}
-        setShow={setShowBellDialog}
-        current={curNotification}
-      />
       <header>
         <Stack
           direction='horizontal'
@@ -147,7 +87,7 @@ function Layout(props) {
                 to='/signup'
                 className='text-decoration-none text-secondary'
               >
-                {t('signup')}
+                Đăng ký
               </Link>
 
               <div className='ms-3 me-2'>
@@ -161,39 +101,6 @@ function Layout(props) {
             </div>
           ) : (
             <div className='d-flex align-items-center sidebar-right'>
-              <div
-                className='position-relative'
-                onMouseLeave={() => setShowListMsg(false)}
-              >
-                <BsBell
-                  className='fs-3 me-4 pointer'
-                  onClick={() => setShowListMsg(!showListMsg)}
-                />
-                {hasNew && <BsFillCircleFill className='bell-icon' />}
-                <div
-                  className={clsx(
-                    "position-absolute bg-white rounded z-index-1 msg-list fw-normal shadow",
-                    showListMsg ? "d-block" : "d-none",
-                  )}
-                >
-                  {bellMsgs.length > 0 ? (
-                    bellMsgs.map((item, index) => (
-                      <div
-                        key={"bell_msg" + index}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleReadMsg(item)}
-                        className={
-                          "text-wrap px-2 py-1 hover-bg-1" + msgStyles[index]
-                        }
-                      >
-                        {item.name}
-                      </div>
-                    ))
-                  ) : (
-                    <span className='ms-3'>Không có thông báo nào</span>
-                  )}
-                </div>
-              </div>
 
               <div className='dropdown pt-1'>
                 <img
@@ -329,7 +236,7 @@ function Layout(props) {
           <div className='row'>
             <div className='col-12 text-center'>
               <p className='text-muted'>
-                © 2023 NextStep. All rights reserved.
+                © 2026 NextStep. All rights reserved.
               </p>
             </div>
           </div>

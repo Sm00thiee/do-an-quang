@@ -94,8 +94,8 @@ const resources = {
       "buildProfile": "Build your profile",
       "trackApplications": "Track applications",
       "createRoadmap": "Create career roadmap",
-      "postJobs": "Post job listings",
-      "findCandidates": "Find talented candidates",
+      "postJobs": "Post Jobs",
+      "findCandidates": "Find Candidates",
       "manageApplications": "Manage applications",
       "companyBranding": "Build company brand",
       "continue": "Continue",
@@ -126,7 +126,7 @@ const resources = {
       "marketingJobs": "Marketing Jobs",
       "links": "Links",
       "blog": "Blog",
-      "allRightsReserved": "© 2023 NextStep. All rights reserved.",
+      "allRightsReserved": "© 2026 NextStep. All rights reserved.",
 
       // Common Actions
       "search": "Search",
@@ -283,7 +283,7 @@ const resources = {
       "marketingJobs": "Việc làm Marketing",
       "links": "Liên kết",
       "blog": "Blog",
-      "allRightsReserved": "© 2023 NextStep. All rights reserved.",
+      "allRightsReserved": "© 2026 NextStep. All rights reserved.",
 
       // Common Actions
       "search": "Tìm kiếm",
@@ -468,6 +468,7 @@ const resources = {
       "connectWithEmployers": "Kết nối với các nhà tuyển dụng hàng đầu",
 
       // Employer/Admin
+      "areYouEmployer": "Bạn là nhà tuyển dụng?",
       "forEmployers": "Đăng tuyển, tìm ứng viên",
       "employerLogin": "Nhà tuyển dụng đăng nhập",
       "adminPanel": "Trang quản trị",
@@ -483,8 +484,8 @@ const resources = {
       "buildProfile": "Xây dựng hồ sơ cá nhân",
       "trackApplications": "Theo dõi đơn ứng tuyển",
       "createRoadmap": "Tạo lộ trình nghề nghiệp",
-      "postJobs": "Đăng tin tuyển dụng",
-      "findCandidates": "Tìm ứng viên tài năng",
+      "postJobs": "Đăng tuyển",
+      "findCandidates": "Tìm ứng viên",
       "manageApplications": "Quản lý đơn ứng tuyển",
       "companyBranding": "Xây dựng thương hiệu",
       "continue": "Tiếp tục",
