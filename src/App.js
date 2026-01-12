@@ -35,6 +35,7 @@ import RoadmapDetail from "./view/candidate/RoadmapDetail";
 import RoadmapList from "./view/candidate/RoadmapList";
 import RoadmapHome from "./view/candidate/RoadmapHome";
 import RoleSelection from "./view/common/auth/RoleSelection";
+import { AppProvider } from "./contexts/AppContext";
 
 export const AppContext = createContext();
 
@@ -42,54 +43,55 @@ function App() {
   const [currentPage, setCurrentPage] = useState("home");
 
   return (
-    <AppContext.Provider value={{ currentPage, setCurrentPage }}>
-      <ToastContainer autoClose={500} position="bottom-right" />
-      <BrowserRouter>
-        <Routes>
-          {/* Candidate authentication routes - without Layout (no header) */}
-          <Route path="login" element={<Login />} />
-          <Route path="signup" element={<Signup />} />
+    <AppProvider>
+      <AppContext.Provider value={{ currentPage, setCurrentPage }}>
+        <ToastContainer autoClose={500} position="bottom-right" />
+        <BrowserRouter>
+          <Routes>
+            {/* Candidate authentication routes - without Layout (no header) */}
+            <Route path="login" element={<Login />} />
+            <Route path="signup" element={<Signup />} />
 
-          {/* Main candidate routes - with Layout (has header) */}
-          <Route
-            path="*"
-            element={
-              <Layout>
-                <Routes>
-                  <Route exact path="" element={<Home />} />
-                  <Route path="companies" element={<CompanyList />} />
-                  <Route path="contact" element={<Contact />} />
-                  <Route path="companies/:id" element={<Company />} />
-                  <Route path="jobs" element={<JobList />} />
-                  <Route path="jobs/:id" element={<Job />} />
-                  <Route path="roadmap" element={<RoadmapList />} />
-                  <Route path="roadmap/create" element={<RoadmapHome />} />
-                  <Route path="roadmap/:id" element={<RoadmapDetail />} />
-                  <Route
-                    path="candidate/*"
-                    element={
-                      <CandidateLayout>
-                        <Routes>
-                          <Route
-                            path="applied-jobs"
-                            element={<AppliedJobs />}
-                          />
-                          <Route path="saved-jobs" element={<SavedJobs />} />
-                          <Route path="profile" element={<Profile />} />
-                          <Route path="resumes" element={<Resume />} />
-                          <Route
-                            path="resumes/create"
-                            element={<Template />}
-                          />
-                          <Route path="resumes/:id" element={<Template />} />
-                        </Routes>
-                      </CandidateLayout>
-                    }
-                  />
-                </Routes>
-              </Layout>
-            }
-          />
+            {/* Main candidate routes - with Layout (has header) */}
+            <Route
+              path="*"
+              element={
+                <Layout>
+                  <Routes>
+                    <Route exact path="" element={<Home />} />
+                    <Route path="companies" element={<CompanyList />} />
+                    <Route path="contact" element={<Contact />} />
+                    <Route path="companies/:id" element={<Company />} />
+                    <Route path="jobs" element={<JobList />} />
+                    <Route path="jobs/:id" element={<Job />} />
+                    <Route path="roadmap" element={<RoadmapList />} />
+                    <Route path="roadmap/create" element={<RoadmapHome />} />
+                    <Route path="roadmap/:id" element={<RoadmapDetail />} />
+                    <Route
+                      path="candidate/*"
+                      element={
+                        <CandidateLayout>
+                          <Routes>
+                            <Route
+                              path="applied-jobs"
+                              element={<AppliedJobs />}
+                            />
+                            <Route path="saved-jobs" element={<SavedJobs />} />
+                            <Route path="profile" element={<Profile />} />
+                            <Route path="resumes" element={<Resume />} />
+                            <Route
+                              path="resumes/create"
+                              element={<Template />}
+                            />
+                            <Route path="resumes/:id" element={<Template />} />
+                          </Routes>
+                        </CandidateLayout>
+                      }
+                    />
+                  </Routes>
+                </Layout>
+              }
+            />
 
           {/* Employer routes */}
           <Route
@@ -127,7 +129,8 @@ function App() {
 
         </Routes>
       </BrowserRouter>
-    </AppContext.Provider>
+      </AppContext.Provider>
+    </AppProvider>
   );
 }
 

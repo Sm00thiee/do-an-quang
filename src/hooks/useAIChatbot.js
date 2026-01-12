@@ -12,12 +12,10 @@ import {
 import {
     getMessages,
     getFields,
-    submitChatMessage,
-    subscribeToMessages,
-    subscribeToJobUpdates,
-    unsubscribeChannel,
-    streamChatResponse
+    createMessage
 } from '../services/chatService';
+import { submitChat } from '../services/chatEdgeClient';
+import useRealtimeChat from './useRealtimeChat';
 
 /**
  * useAIChatbot Hook
@@ -36,10 +34,32 @@ export const useAIChatbot = (fieldId = null) => {
     const [error, setError] = useState(null);
     const [questionLimit, setQuestionLimit] = useState(null);
     const [streamingMessage, setStreamingMessage] = useState('');
+    // Handle new messages from realtime
+    const handleRealtimeNewMessage = useCallback((message) => {
+        // Only add assistant messages (user messages are added optimistically in sendMessage)
+        if (message.role === 'assistant') {
+            setMessages(prev => {
+                // Avoid duplicates
+                if (prev.some(m => m.id === message.id)) {
+                    return prev;
+                }
+                return [...prev, message];
+            });
+            // Stop showing loading state when we get the assistant response
+            setSending(false);
+            setStreamingMessage('');
+        }
+    }, []);
 
-    // Refs for subscriptions
-    const messageChannelRef = useRef(null);
-    const jobChannelRef = useRef(null);
+    const {
+        subscribe: subscribeRealtime,
+        unsubscribe: unsubscribeRealtime,
+        isConnected: realtimeConnected,
+        isProcessing: realtimeProcessing,
+        activeJobs: realtimeActiveJobs,
+        jobHistory: realtimeJobHistory,
+        realtimeState
+    } = useRealtimeChat({ onNewMessage: handleRealtimeNewMessage });
 
     /**
      * Khởi tạo session và load dữ liệu
@@ -65,8 +85,8 @@ export const useAIChatbot = (fieldId = null) => {
             const fieldsList = await getFields();
             setFields(fieldsList);
 
-            // Subscribe to real-time updates
-            setupRealtimeSubscriptions(newSession.session_id);
+            // Subscribe enhanced realtime service (handles both messages and jobs)
+            subscribeRealtime(newSession.session_id);
 
         } catch (err) {
             console.error('Error initializing session:', err);
@@ -74,38 +94,11 @@ export const useAIChatbot = (fieldId = null) => {
         } finally {
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentField]);
 
     /**
-     * Thiết lập real-time subscriptions
-     */
-    const setupRealtimeSubscriptions = (sessionId) => {
-        // Subscribe to messages
-        messageChannelRef.current = subscribeToMessages(
-            sessionId,
-            (newMessage) => {
-                setMessages(prev => [...prev, newMessage]);
-            },
-            (err) => {
-                console.error('Message subscription error:', err);
-            }
-        );
-
-        // Subscribe to job updates
-        jobChannelRef.current = subscribeToJobUpdates(
-            sessionId,
-            (job) => {
-                console.log('Job update:', job);
-                // Có thể xử lý job status ở đây
-            },
-            (err) => {
-                console.error('Job subscription error:', err);
-            }
-        );
-    };
-
-    /**
-     * Gửi tin nhắn
+     * Gửi tin nhắn - Sử dụng Supabase Edge Functions
      */
     const sendMessage = useCallback(async (messageContent) => {
         if (!session || !messageContent.trim()) {
@@ -123,40 +116,167 @@ export const useAIChatbot = (fieldId = null) => {
         setStreamingMessage('');
 
         try {
-            // Gửi tin nhắn và xử lý streaming response
-            await streamChatResponse(
-                session.session_id,
-                messageContent,
-                currentField,
-                // onChunk - nhận từng đoạn response
-                (chunk) => {
-                    setStreamingMessage(prev => prev + chunk);
-                },
-                // onComplete - hoàn thành
-                (result) => {
-                    console.log('Chat completed:', result);
-                    setStreamingMessage('');
-                    setSending(false);
-                },
-                // onError - lỗi
-                (errorMsg) => {
-                    console.error('Chat error:', errorMsg);
-                    setError(errorMsg);
-                    setStreamingMessage('');
-                    setSending(false);
-                }
-            );
+            // 1. Tạo user message trong database ngay lập tức (optimistic update)
+            // Check if this is a local session (id starts with "local-")
+            const isLocalSession = session.id && session.id.startsWith('local-');
+            const sessionIdToUse = isLocalSession ? session.session_id : session.session_id;
+            
+            const userMessage = await createMessage(sessionIdToUse, 'user', messageContent);
+            setMessages(prev => [...prev, userMessage]);
 
-            // Cập nhật lại question limit
-            const hasLimit = await checkQuestionLimit(session.session_id);
-            setQuestionLimit(hasLimit);
+            // 2. Try to submit vào Edge Function để xử lý AI response
+            console.log('[useAIChatbot] Submitting chat to edge function:', {
+                sessionId: session.session_id,
+                fieldId: currentField,
+                messageLength: messageContent.length
+            });
+
+            let useFallback = false;
+            try {
+                let fullStreamedResponse = '';
+                const result = await submitChat({
+                    session_id: session.session_id,
+                    field_id: currentField,
+                    message: messageContent,
+                    conversation_history: messages // Include conversation history for context
+                }, {
+                    // Handle streaming chunks
+                    onChunk: (chunk) => {
+                        fullStreamedResponse += chunk;
+                        setStreamingMessage(fullStreamedResponse);
+                    },
+                    // Handle completion
+                    onDone: async (data) => {
+                        console.log('[useAIChatbot] Stream completed:', {
+                            responseLength: fullStreamedResponse.length,
+                            jobId: data.job_id
+                        });
+                        
+                        // Create assistant message with the complete response
+                        const assistantMessage = await createMessage(
+                            session.session_id,
+                            'assistant',
+                            fullStreamedResponse
+                        );
+                        setMessages(prev => [...prev, assistantMessage]);
+                        setSending(false);
+                        setStreamingMessage('');
+                    },
+                    // Handle errors
+                    onError: (error) => {
+                        console.error('[useAIChatbot] Stream error:', error);
+                        setError(error);
+                        setSending(false);
+                        setStreamingMessage('');
+                    }
+                });
+
+                if (result.error) {
+                    // If Edge Function fails (e.g., invalid API key), use fallback
+                    console.warn('[useAIChatbot] Edge Function failed, using fallback:', result.error);
+                    useFallback = true;
+                } else if (!result.data?.streaming) {
+                    // Non-streaming response (shouldn't happen but handle it)
+                    console.log('[useAIChatbot] Non-streaming response received');
+                    setSending(false);
+                    setStreamingMessage('');
+                }
+            } catch (err) {
+                console.warn('[useAIChatbot] Edge Function exception, using fallback:', err.message);
+                useFallback = true;
+            }
+
+            // 3. If Edge Function failed, use local AI fallback
+            if (useFallback) {
+                const { generateAIResponseWithContext } = await import('../services/geminiService');
+                const fieldsList = fields || [];
+                const currentFieldData = fieldsList.find(f => f.id === currentField) || null;
+                
+                const aiResponse = await generateAIResponseWithContext(messageContent, {
+                    fields: fieldsList,
+                    currentField: currentFieldData
+                });
+
+                // Create assistant message locally
+                const assistantMessage = await createMessage(
+                    session.session_id,
+                    'assistant',
+                    aiResponse
+                );
+                setMessages(prev => [...prev, assistantMessage]);
+                setSending(false);
+                setStreamingMessage('');
+            }
+
+            // 4. Cập nhật lại question limit (if Supabase is available)
+            try {
+                const hasLimit = await checkQuestionLimit(session.session_id);
+                setQuestionLimit(hasLimit);
+            } catch (err) {
+                // If check fails, assume unlimited (for local mode)
+                setQuestionLimit(true);
+            }
+
+            // Note: setSending(false) will be called when we receive the assistant message via realtime
+            // or if we use fallback. We keep it true to show loading state until then.
 
         } catch (err) {
-            console.error('Error sending message:', err);
-            setError(err.message);
+            console.error('[useAIChatbot] Error sending message:', err);
+            
+            // Extract error message (handle both Error objects and Supabase error objects)
+            const errorMessage = err?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+            const errorStr = String(errorMessage);
+            
+            // If error is about invalid API key or Supabase issues, try fallback AI response
+            if (errorStr.includes('Invalid API key') || 
+                errorStr.includes('Failed to create session') ||
+                errorStr.includes('401') ||
+                (err && err.hint && err.hint.includes('API key'))) {
+                console.warn('[useAIChatbot] Supabase unavailable, using local AI fallback');
+                try {
+                    const { generateAIResponseWithContext } = await import('../services/geminiService');
+                    const fieldsList = fields || [];
+                    const currentFieldData = fieldsList.find(f => f.id === currentField) || null;
+                    
+                    const aiResponse = await generateAIResponseWithContext(messageContent, {
+                        fields: fieldsList,
+                        currentField: currentFieldData
+                    });
+
+                    // Create assistant message locally (this should work even with Supabase errors)
+                    try {
+                        const assistantMessage = await createMessage(
+                            session.session_id,
+                            'assistant',
+                            aiResponse
+                        );
+                        setMessages(prev => [...prev, assistantMessage]);
+                        setSending(false);
+                        setStreamingMessage('');
+                        return; // Success with fallback
+                    } catch (msgErr) {
+                        // Even createMessage failed, but we can still show the response
+                        console.warn('[useAIChatbot] Could not save assistant message, but showing response');
+                        setMessages(prev => [...prev, {
+                            id: `temp-${Date.now()}`,
+                            role: 'assistant',
+                            content: aiResponse,
+                            created_at: new Date().toISOString()
+                        }]);
+                        setSending(false);
+                        setStreamingMessage('');
+                        return;
+                    }
+                } catch (fallbackErr) {
+                    console.error('[useAIChatbot] Fallback also failed:', fallbackErr);
+                }
+            }
+            
+            setError(errorStr || 'Failed to send message');
             setSending(false);
             setStreamingMessage('');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, currentField, questionLimit]);
 
     /**
@@ -171,13 +291,8 @@ export const useAIChatbot = (fieldId = null) => {
      * Reset session (tạo mới)
      */
     const resetSession = useCallback(async () => {
-        // Cleanup subscriptions
-        if (messageChannelRef.current) {
-            unsubscribeChannel(messageChannelRef.current);
-        }
-        if (jobChannelRef.current) {
-            unsubscribeChannel(jobChannelRef.current);
-        }
+        // Cleanup enhanced realtime
+        unsubscribeRealtime();
 
         // Clear state
         setSession(null);
@@ -186,7 +301,42 @@ export const useAIChatbot = (fieldId = null) => {
 
         // Initialize new session
         await initializeSession();
-    }, [initializeSession]);
+    }, [initializeSession, unsubscribeRealtime]);
+
+    /**
+     * Listen for new messages from realtime service
+     */
+    useEffect(() => {
+        // This will be handled by useRealtimeChat hook's callbacks
+        // We just need to sync messages when they arrive
+    }, []);
+
+    /**
+     * Handle job status updates - update sending state based on job completion
+     */
+    useEffect(() => {
+        // If we have active jobs, keep sending state true
+        if (realtimeActiveJobs.length > 0) {
+            setSending(true);
+        } else if (realtimeActiveJobs.length === 0 && sending) {
+            // No active jobs but we were sending - check if we got the message
+            // If not, might be an error or timeout
+            // The handleRealtimeNewMessage will set sending to false when message arrives
+        }
+    }, [realtimeActiveJobs, sending]);
+
+    /**
+     * Handle job failures - show error and stop sending
+     */
+    useEffect(() => {
+        const failedJobs = realtimeJobHistory.filter(j => j.status === 'failed');
+        if (failedJobs.length > 0 && sending) {
+            const latestFailed = failedJobs[0];
+            setError(latestFailed.error_message || 'Failed to process message');
+            setSending(false);
+            setStreamingMessage('');
+        }
+    }, [realtimeJobHistory, sending]);
 
     /**
      * Khởi tạo khi component mount
@@ -196,14 +346,10 @@ export const useAIChatbot = (fieldId = null) => {
 
         // Cleanup khi unmount
         return () => {
-            if (messageChannelRef.current) {
-                unsubscribeChannel(messageChannelRef.current);
-            }
-            if (jobChannelRef.current) {
-                unsubscribeChannel(jobChannelRef.current);
-            }
+            unsubscribeRealtime();
         };
-    }, [initializeSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return {
         // State
@@ -221,7 +367,13 @@ export const useAIChatbot = (fieldId = null) => {
         sendMessage,
         changeField,
         resetSession,
-        initializeSession
+        initializeSession,
+        // Realtime data for UI (e.g., status badges, job counters)
+        realtimeConnected,
+        realtimeProcessing,
+        realtimeActiveJobs,
+        realtimeJobHistory,
+        realtimeState
     };
 };
 

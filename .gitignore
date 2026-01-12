@@ -46,3 +46,6 @@ __pycache__/
 
 # OS files
 Thumbs.db
+
+.env
+.playwright-mcp

@@ -1,93 +1,187 @@
 /**
  * Chat Service
  * Xử lý các chức năng chat với AI
+ * Sử dụng chat Supabase instance
+ * Enhanced with CSV Learning Path Detection
  */
 
-import { supabase, EDGE_FUNCTIONS_URL } from './supabase';
+import { supabaseChat, CHAT_EDGE_FUNCTIONS_URL } from './supabase';
+import csvService, { VIETNAMESE_LEARNING_PATH_KEYWORDS } from './csvService';
 
 /**
  * Lấy danh sách fields (lĩnh vực học tập)
  */
+// Fallback fields if Supabase is unavailable
+const FALLBACK_FIELDS = [
+    { id: 'marketing', name: 'Marketing', description: 'Học về marketing và quảng cáo' },
+    { id: 'ui-ux', name: 'UI/UX Design', description: 'Thiết kế giao diện và trải nghiệm người dùng' },
+    { id: 'graphic', name: 'Graphic Design', description: 'Thiết kế đồ họa và hình ảnh' },
+    { id: 'web', name: 'Web Development', description: 'Phát triển ứng dụng web' },
+    { id: 'mobile', name: 'Mobile Development', description: 'Phát triển ứng dụng di động' }
+];
+
 export const getFields = async () => {
-    const { data, error } = await supabase
+    if (!supabaseChat) {
+        console.warn('[chatService] Chat Supabase not configured, using fallback fields');
+        return FALLBACK_FIELDS;
+    }
+    
+    console.log('[chatService] Fetching fields from Supabase...');
+    const { data, error } = await supabaseChat
         .from('fields')
         .select('*')
         .eq('is_active', true)
         .order('name');
 
-    if (error) throw error;
-    return data || [];
+    if (error) {
+        console.warn('[chatService] Error fetching fields, using fallback:', error.message);
+        
+        // If 401 (invalid API key) or other errors, use fallback fields
+        if (error.message && error.message.includes('Invalid API key')) {
+            console.warn('[chatService] Invalid API key detected, using fallback fields. Please update REACT_APP_CHAT_SUPABASE_ANON_KEY in .env');
+        }
+        
+        // Return fallback fields instead of throwing
+        return FALLBACK_FIELDS;
+    }
+    console.log('[chatService] Fields fetched:', data?.length || 0);
+    return data || FALLBACK_FIELDS;
+};
+
+/**
+ * Lấy tin nhắn từ localStorage (fallback)
+ */
+const getLocalMessages = (sessionId) => {
+    try {
+        const stored = localStorage.getItem(`chat_messages_${sessionId}`);
+        return stored ? JSON.parse(stored) : [];
+    } catch {
+        return [];
+    }
+};
+
+/**
+ * Lưu tin nhắn vào localStorage (fallback)
+ */
+const saveLocalMessage = (sessionId, message) => {
+    try {
+        const messages = getLocalMessages(sessionId);
+        messages.push({
+            ...message,
+            id: message.id || `local-${Date.now()}-${Math.random()}`,
+            created_at: message.created_at || new Date().toISOString()
+        });
+        localStorage.setItem(`chat_messages_${sessionId}`, JSON.stringify(messages));
+        return messages[messages.length - 1];
+    } catch (error) {
+        console.error('[chatService] Error saving local message:', error);
+        return message;
+    }
 };
 
 /**
  * Lấy tin nhắn của session
+ * Using local storage for demo (no Supabase sessions needed)
  */
 export const getMessages = async (sessionId) => {
-    // Lấy session UUID từ session_id string
-    const { data: session } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('session_id', sessionId)
-        .single();
-
-    if (!session) throw new Error('Session not found');
-
-    const { data, error } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('chat_session_id', session.id)
-        .order('created_at', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
+    // For demo purposes, use local storage only
+    // This avoids 406 errors from checking chat_sessions table
+    return getLocalMessages(sessionId);
 };
 
 /**
  * Tạo tin nhắn mới
+ * Using local storage for demo (no Supabase sessions needed)
  */
 export const createMessage = async (sessionId, role, content) => {
-    // Lấy session UUID từ session_id string
-    const { data: session } = await supabase
-        .from('chat_sessions')
-        .select('id')
-        .eq('session_id', sessionId)
-        .single();
-
-    if (!session) throw new Error('Session not found');
-
-    const { data, error } = await supabase
-        .from('chat_messages')
-        .insert({
-            chat_session_id: session.id,
-            role,
-            content
-        })
-        .select()
-        .single();
-
-    if (error) throw error;
-    return data;
+    // For demo purposes, use local storage only
+    // This avoids 406 errors from checking chat_sessions table
+    const message = {
+        id: `local-${Date.now()}-${Math.random()}`,
+        chat_session_id: sessionId,
+        role,
+        content,
+        created_at: new Date().toISOString()
+    };
+    return saveLocalMessage(sessionId, message);
 };
 
 /**
  * Gửi tin nhắn đến AI (sử dụng Edge Functions)
+ * Enhanced with CSV learning path detection
  */
-export const submitChatMessage = async (sessionId, message, fieldId) => {
-    const response = await fetch(`${EDGE_FUNCTIONS_URL}/chat-submit`, {
+export const submitChatMessage = async (sessionId, message, fieldId, fieldName = null, conversationHistory = []) => {
+    // Check if this is a learning path request
+    const isLearningPathRequest = csvService.isLearningPathRequest(message);
+    
+    if (isLearningPathRequest) {
+        console.log('[chatService] Learning path request detected');
+        
+        // Detect field from message or use provided fieldId
+        let targetField = fieldName;
+        if (!targetField && fieldId) {
+            // Get field name from fieldId
+            const fields = await getFields();
+            const field = fields.find(f => f.id === fieldId);
+            targetField = field?.name;
+        }
+        
+        // If no field from session, try to detect from message
+        if (!targetField) {
+            targetField = csvService.detectFieldFromMessage(message);
+        }
+        
+        if (targetField) {
+            console.log(`[chatService] Getting learning paths for field: ${targetField}`);
+            const learningPaths = await csvService.getLearningPathsByField(targetField);
+            
+            if (learningPaths && learningPaths.length > 0) {
+                console.log(`[chatService] Found ${learningPaths.length} learning paths`);
+                // Return CSV response instead of calling AI
+                return {
+                    isCSVResponse: true,
+                    learningPaths,
+                    field: targetField
+                };
+            }
+        }
+    }
+    
+    // If not a learning path request or no CSV data found, use AI
+    if (!CHAT_EDGE_FUNCTIONS_URL) {
+        console.error('[chatService] CHAT_EDGE_FUNCTIONS_URL is not configured');
+        throw new Error('Edge Functions URL is not configured');
+    }
+    
+    const url = `${CHAT_EDGE_FUNCTIONS_URL}/chat-submit`;
+    console.log('[chatService] Submitting chat message to:', url, { 
+        sessionId, 
+        messageLength: message?.length, 
+        fieldId, 
+        fieldName,
+        historyLength: conversationHistory.length 
+    });
+    
+    const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${process.env.REACT_APP_CHAT_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
             session_id: sessionId,
             message,
-            field_id: fieldId
+            field_id: fieldId,
+            field_name: fieldName,
+            conversation_history: conversationHistory
         })
     });
 
+    console.log('[chatService] Edge function response status:', response.status);
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('[chatService] Edge function error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     return response;
@@ -97,10 +191,10 @@ export const submitChatMessage = async (sessionId, message, fieldId) => {
  * Lấy trạng thái job
  */
 export const getJobStatus = async (jobId) => {
-    const response = await fetch(`${EDGE_FUNCTIONS_URL}/chat-status?job_id=${jobId}`, {
+    const response = await fetch(`${CHAT_EDGE_FUNCTIONS_URL}/chat-status?job_id=${jobId}`, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${process.env.REACT_APP_CHAT_SUPABASE_ANON_KEY}`
         }
     });
 
@@ -115,11 +209,11 @@ export const getJobStatus = async (jobId) => {
  * Lấy trạng thái session
  */
 export const getSessionStatus = async (sessionId, limit = 10) => {
-    const response = await fetch(`${EDGE_FUNCTIONS_URL}/chat-status`, {
+    const response = await fetch(`${CHAT_EDGE_FUNCTIONS_URL}/chat-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${process.env.REACT_APP_CHAT_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
             session_id: sessionId,
@@ -139,7 +233,7 @@ export const getSessionStatus = async (sessionId, limit = 10) => {
  */
 export const subscribeToMessages = (sessionId, onNewMessage, onError) => {
     // Lấy session UUID từ session_id string
-    supabase
+    supabaseChat
         .from('chat_sessions')
         .select('id')
         .eq('session_id', sessionId)
@@ -150,7 +244,7 @@ export const subscribeToMessages = (sessionId, onNewMessage, onError) => {
                 return;
             }
 
-            const channel = supabase
+            const channel = supabaseChat
                 .channel(`messages_${sessionId}`)
                 .on('postgres_changes', {
                     event: 'INSERT',
@@ -172,7 +266,7 @@ export const subscribeToMessages = (sessionId, onNewMessage, onError) => {
  */
 export const subscribeToJobUpdates = (sessionId, onJobUpdate, onError) => {
     // Lấy session UUID từ session_id string
-    supabase
+    supabaseChat
         .from('chat_sessions')
         .select('id')
         .eq('session_id', sessionId)
@@ -183,7 +277,7 @@ export const subscribeToJobUpdates = (sessionId, onJobUpdate, onError) => {
                 return;
             }
 
-            const channel = supabase
+            const channel = supabaseChat
                 .channel(`jobs_${sessionId}`)
                 .on('postgres_changes', {
                     event: '*',
@@ -204,17 +298,17 @@ export const subscribeToJobUpdates = (sessionId, onJobUpdate, onError) => {
  * Hủy đăng ký channel
  */
 export const unsubscribeChannel = (channel) => {
-    if (channel) {
-        supabase.removeChannel(channel);
+    if (channel && supabaseChat) {
+        supabaseChat.removeChannel(channel);
     }
 };
 
 /**
  * Xử lý streaming response từ AI
  */
-export const streamChatResponse = async (sessionId, message, fieldId, onChunk, onComplete, onError) => {
+export const streamChatResponse = async (sessionId, message, fieldId, onChunk, onComplete, onError, fieldName = null, conversationHistory = []) => {
     try {
-        const response = await submitChatMessage(sessionId, message, fieldId);
+        const response = await submitChatMessage(sessionId, message, fieldId, fieldName, conversationHistory);
 
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();

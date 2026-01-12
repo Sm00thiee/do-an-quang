@@ -1,9 +1,10 @@
 /**
  * Session Management Service
  * Quản lý session cho AI chatbot
+ * Sử dụng chat Supabase instance
  */
 
-import { supabase } from './supabase';
+import { supabaseChat } from './supabase';
 
 const SESSION_KEY = 'ai_chatbot_session_id';
 const SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
@@ -67,10 +68,14 @@ export const isSessionExpired = (session) => {
  * Tạo session mới trong database
  */
 export const createSession = async (fieldId) => {
+    if (!supabaseChat) {
+        throw new Error('Chat Supabase instance is not configured. Please set REACT_APP_CHAT_SUPABASE_URL and REACT_APP_CHAT_SUPABASE_ANON_KEY in .env');
+    }
+    
     const sessionId = generateSessionId();
     storeSessionId(sessionId);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseChat
         .from('chat_sessions')
         .insert({
             session_id: sessionId,
@@ -80,7 +85,21 @@ export const createSession = async (fieldId) => {
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) {
+        // Provide helpful error message for 401 (invalid API key)
+        if (error.message && error.message.includes('Invalid API key')) {
+            const helpfulError = new Error(
+                'Invalid Supabase API key. Please:\n' +
+                '1. Go to https://supabase.com/dashboard/project/hdbgaxifsgrvlfsztvrm/settings/api\n' +
+                '2. Copy the "anon public" key\n' +
+                '3. Update REACT_APP_CHAT_SUPABASE_ANON_KEY in your .env file\n' +
+                '4. Restart your dev server'
+            );
+            helpfulError.originalError = error;
+            throw helpfulError;
+        }
+        throw error;
+    }
     return data;
 };
 
@@ -88,7 +107,11 @@ export const createSession = async (fieldId) => {
  * Validate session hiện tại
  */
 export const validateSession = async (sessionId) => {
-    const { data, error } = await supabase
+    if (!supabaseChat) {
+        return null; // Return null if chat instance not configured
+    }
+    
+    const { data, error } = await supabaseChat
         .from('chat_sessions')
         .select('*')
         .eq('session_id', sessionId)
@@ -108,24 +131,66 @@ export const validateSession = async (sessionId) => {
  * Lấy hoặc tạo session
  */
 export const getOrCreateSession = async (fieldId) => {
+    // If chat Supabase is not configured, return a local session
+    if (!supabaseChat) {
+        const localSessionId = getStoredSessionId() || generateSessionId();
+        if (!getStoredSessionId()) {
+            storeSessionId(localSessionId);
+        }
+        return {
+            id: `local-${localSessionId}`,
+            session_id: localSessionId,
+            field_id: fieldId,
+            question_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+    }
+    
     const storedSessionId = getStoredSessionId();
 
     if (storedSessionId) {
-        const existingSession = await validateSession(storedSessionId);
-        if (existingSession) {
-            return existingSession;
+        try {
+            const existingSession = await validateSession(storedSessionId);
+            if (existingSession) {
+                return existingSession;
+            }
+        } catch (error) {
+            // If validation fails (e.g., 401), fall back to local mode
+            console.warn('[sessionService] Supabase validation failed, using local session:', error.message);
         }
     }
 
-    // Tạo session mới
-    return await createSession(fieldId);
+    // Try to create session in Supabase, fall back to local if it fails
+    try {
+        return await createSession(fieldId);
+    } catch (error) {
+        // If creation fails (e.g., 401 Invalid API key), use local session
+        console.warn('[sessionService] Supabase session creation failed, using local session:', error.message);
+        const localSessionId = getStoredSessionId() || generateSessionId();
+        if (!getStoredSessionId()) {
+            storeSessionId(localSessionId);
+        }
+        return {
+            id: `local-${localSessionId}`,
+            session_id: localSessionId,
+            field_id: fieldId,
+            question_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+    }
 };
 
 /**
  * Kiểm tra giới hạn câu hỏi
  */
 export const checkQuestionLimit = async (sessionId) => {
-    const { data, error } = await supabase
+    if (!supabaseChat) {
+        return false; // Return false if chat instance not configured
+    }
+    
+    const { data, error } = await supabaseChat
         .from('chat_sessions')
         .select('question_count')
         .eq('session_id', sessionId)
@@ -140,8 +205,103 @@ export const checkQuestionLimit = async (sessionId) => {
  * Cập nhật hoạt động của session
  */
 export const updateSessionActivity = async (sessionId) => {
-    await supabase
+    if (!supabaseChat) {
+        return; // Silently return if chat instance not configured
+    }
+    
+    await supabaseChat
         .from('chat_sessions')
         .update({ updated_at: new Date().toISOString() })
         .eq('session_id', sessionId);
+};
+
+/**
+ * Lấy tất cả các chat sessions
+ */
+export const getAllChatSessions = async () => {
+    if (!supabaseChat) {
+        console.warn('[sessionService] Chat Supabase not configured');
+        return [];
+    }
+    
+    try {
+        const { data, error } = await supabaseChat
+            .from('chat_sessions')
+            .select(`
+                *,
+                field:fields(*),
+                messages:chat_messages(*)
+            `)
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            console.error('[sessionService] Error fetching chat sessions:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('[sessionService] Exception fetching chat sessions:', error);
+        return [];
+    }
+};
+
+/**
+ * Xóa một chat session (sẽ cascade delete messages và learning paths)
+ */
+export const deleteChatSession = async (sessionId) => {
+    if (!supabaseChat) {
+        throw new Error('Chat Supabase instance is not configured');
+    }
+    
+    try {
+        console.log('[sessionService] Deleting chat session:', sessionId);
+        
+        const { error, count } = await supabaseChat
+            .from('chat_sessions')
+            .delete({ count: 'exact' })
+            .eq('id', sessionId);
+
+        console.log('[sessionService] Delete result - error:', error, 'count:', count);
+
+        if (error) {
+            console.error('[sessionService] Supabase delete error:', error);
+            throw error;
+        }
+
+        return { success: true, count };
+    } catch (error) {
+        console.error('[sessionService] Delete exception:', error);
+        throw error;
+    }
+};
+
+/**
+ * Xóa tất cả chat sessions
+ */
+export const deleteAllChatSessions = async () => {
+    if (!supabaseChat) {
+        throw new Error('Chat Supabase instance is not configured');
+    }
+    
+    try {
+        console.log('[sessionService] Deleting all chat sessions');
+        
+        const { error, count } = await supabaseChat
+            .from('chat_sessions')
+            .delete({ count: 'exact' })
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (using a condition that matches all)
+
+        console.log('[sessionService] Delete all result - error:', error, 'count:', count);
+
+        if (error) {
+            console.error('[sessionService] Supabase delete all error:', error);
+            throw error;
+        }
+
+        return { success: true, count };
+    } catch (error) {
+        console.error('[sessionService] Delete all exception:', error);
+        throw error;
+    }
 };

@@ -1,15 +1,16 @@
 /**
  * Chat Service - FREE TIER VERSION
  * Sử dụng polling thay vì realtime subscriptions
+ * Sử dụng chat Supabase instance
  */
 
-import { supabase, EDGE_FUNCTIONS_URL } from './supabase';
+import { supabaseChat, CHAT_EDGE_FUNCTIONS_URL } from './supabase';
 
 /**
  * Lấy danh sách fields (lĩnh vực học tập)
  */
 export const getFields = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseChat
         .from('fields')
         .select('*')
         .eq('is_active', true)
@@ -24,7 +25,7 @@ export const getFields = async () => {
  */
 export const getMessages = async (sessionId) => {
     // Lấy session UUID từ session_id string
-    const { data: session } = await supabase
+    const { data: session } = await supabaseChat
         .from('chat_sessions')
         .select('id')
         .eq('session_id', sessionId)
@@ -32,7 +33,7 @@ export const getMessages = async (sessionId) => {
 
     if (!session) throw new Error('Session not found');
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseChat
         .from('chat_messages')
         .select('*')
         .eq('chat_session_id', session.id)
@@ -47,7 +48,7 @@ export const getMessages = async (sessionId) => {
  */
 export const createMessage = async (sessionId, role, content) => {
     // Lấy session UUID từ session_id string
-    const { data: session } = await supabase
+    const { data: session } = await supabaseChat
         .from('chat_sessions')
         .select('id')
         .eq('session_id', sessionId)
@@ -55,7 +56,7 @@ export const createMessage = async (sessionId, role, content) => {
 
     if (!session) throw new Error('Session not found');
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseChat
         .from('chat_messages')
         .insert({
             chat_session_id: session.id,
@@ -74,7 +75,7 @@ export const createMessage = async (sessionId, role, content) => {
  * Gọi function này mỗi vài giây để lấy messages mới
  */
 export const checkForNewMessages = async (sessionId, lastMessageId = null) => {
-    const { data: session } = await supabase
+    const { data: session } = await supabaseChat
         .from('chat_sessions')
         .select('id')
         .eq('session_id', sessionId)
@@ -82,7 +83,7 @@ export const checkForNewMessages = async (sessionId, lastMessageId = null) => {
 
     if (!session) return [];
 
-    let query = supabase
+    let query = supabaseChat
         .from('chat_messages')
         .select('*')
         .eq('chat_session_id', session.id)
@@ -90,7 +91,7 @@ export const checkForNewMessages = async (sessionId, lastMessageId = null) => {
 
     // Nếu có lastMessageId, chỉ lấy messages sau nó
     if (lastMessageId) {
-        const { data: lastMsg } = await supabase
+        const { data: lastMsg } = await supabaseChat
             .from('chat_messages')
             .select('created_at')
             .eq('id', lastMessageId)
@@ -112,11 +113,11 @@ export const checkForNewMessages = async (sessionId, lastMessageId = null) => {
  */
 export const submitChatMessage = async (sessionId, message, fieldId) => {
     try {
-        const response = await fetch(`${EDGE_FUNCTIONS_URL}/chat-submit`, {
+        const response = await fetch(`${CHAT_EDGE_FUNCTIONS_URL}/chat-submit`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+                'Authorization': `Bearer ${process.env.REACT_APP_CHAT_SUPABASE_ANON_KEY}`
             },
             body: JSON.stringify({
                 session_id: sessionId,
