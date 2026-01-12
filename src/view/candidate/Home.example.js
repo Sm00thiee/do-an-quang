@@ -44,14 +44,30 @@ function HomeWithAIChatbot() {
     // ===========================================================================
     // LOCAL STATE - Giữ nguyên state management hiện tại
     // ===========================================================================
-    const [chatSessions, setChatSessions] = useState([
-        {
-            id: 1,
-            name: "Nextstep Chat",
+    const [chatSessions, setChatSessions] = useState(() => {
+        // Load from localStorage on mount
+        const saved = localStorage.getItem('chatSessions');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error('Error parsing saved sessions:', e);
+            }
+        }
+        // Default first session
+        return [{
+            id: Date.now().toString(),
+            name: "Chat mới",
             messages: [],
-        },
-    ]);
-    const [activeSession, setActiveSession] = useState(1);
+            sessionId: session?.session_id || null,
+            createdAt: new Date().toISOString()
+        }];
+    });
+    const [activeSession, setActiveSession] = useState(() => {
+        const saved = localStorage.getItem('activeSession');
+        if (saved && saved !== 'null') return saved;
+        return chatSessions[0]?.id || Date.now().toString();
+    });
     const [messageInput, setMessageInput] = useState("");
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const messagesEndRef = useRef(null);
@@ -68,15 +84,53 @@ function HomeWithAIChatbot() {
     // Sync AI messages với local chat sessions
     useEffect(() => {
         if (aiMessages.length > 0) {
-            setChatSessions(prev =>
-                prev.map(s =>
-                    s.id === activeSession
-                        ? { ...s, messages: convertAIMessagesToLocal(aiMessages) }
-                        : s
-                )
-            );
+            setChatSessions(prev => {
+                const updated = prev.map(s => {
+                    if (s.id === activeSession) {
+                        const convertedMessages = convertAIMessagesToLocal(aiMessages);
+                        // Auto-generate name from first user message
+                        const firstUserMsg = aiMessages.find(m => m.role === 'user');
+                        const autoName = firstUserMsg 
+                            ? firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '')
+                            : s.name;
+                        
+                        return {
+                            ...s,
+                            messages: convertedMessages,
+                            name: s.name === "Chat mới" ? autoName : s.name,
+                            sessionId: session?.session_id
+                        };
+                    }
+                    return s;
+                });
+                localStorage.setItem('chatSessions', JSON.stringify(updated));
+                return updated;
+            });
         }
-    }, [aiMessages, activeSession]);
+    }, [aiMessages, activeSession, session]);
+
+    // Save active session to localStorage
+    useEffect(() => {
+        localStorage.setItem('activeSession', activeSession);
+    }, [activeSession]);
+
+    // Initialize first session with current AI session
+    useEffect(() => {
+        if (session?.session_id && chatSessions.length > 0) {
+            setChatSessions(prev => {
+                const firstSession = prev[0];
+                if (!firstSession.sessionId) {
+                    const updated = [{
+                        ...firstSession,
+                        sessionId: session.session_id
+                    }, ...prev.slice(1)];
+                    localStorage.setItem('chatSessions', JSON.stringify(updated));
+                    return updated;
+                }
+                return prev;
+            });
+        }
+    }, [session?.session_id]);
 
     // ===========================================================================
     // HELPER FUNCTIONS
@@ -157,12 +211,18 @@ ${t('wantToExplore')} ${topic.name} không?`;
             await resetSession(); // Tạo session mới
 
             const newSession = {
-                id: Date.now(),
-                name: `Chat ${chatSessions.length + 1}`,
-                messages: []
+                id: Date.now().toString(),
+                name: `Chat mới`,
+                messages: [],
+                sessionId: null, // Will be set when messages are synced
+                createdAt: new Date().toISOString()
             };
 
-            setChatSessions(prev => [...prev, newSession]);
+            setChatSessions(prev => {
+                const updated = [newSession, ...prev]; // Add to beginning
+                localStorage.setItem('chatSessions', JSON.stringify(updated));
+                return updated;
+            });
             setActiveSession(newSession.id);
 
             if (window.innerWidth < 992) setShowMobileSidebar(false);
@@ -175,13 +235,44 @@ ${t('wantToExplore')} ${topic.name} không?`;
      * Xử lý xóa chat
      */
     const deleteChat = (sessionId) => {
+        if (chatSessions.length <= 1) {
+            alert('Không thể xóa chat cuối cùng!');
+            return;
+        }
+
         setChatSessions(prev => {
             const filtered = prev.filter(s => s.id !== sessionId);
             if (sessionId === activeSession && filtered.length > 0) {
                 setActiveSession(filtered[0].id);
             }
+            localStorage.setItem('chatSessions', JSON.stringify(filtered));
             return filtered;
         });
+    };
+
+    /**
+     * Xử lý xóa tất cả chat
+     */
+    const deleteAllChats = async () => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa tất cả lịch sử chat?')) {
+            try {
+                // Reset to single new chat
+                await resetSession();
+                const newSession = {
+                    id: Date.now().toString(),
+                    name: "Chat mới",
+                    messages: [],
+                    sessionId: null,
+                    createdAt: new Date().toISOString()
+                };
+                setChatSessions([newSession]);
+                setActiveSession(newSession.id);
+                localStorage.setItem('chatSessions', JSON.stringify([newSession]));
+                localStorage.setItem('activeSession', newSession.id);
+            } catch (error) {
+                console.error('Error deleting all chats:', error);
+            }
+        }
     };
 
     /**
@@ -243,14 +334,24 @@ ${t('wantToExplore')} ${topic.name} không?`;
                 </div>
             )}
 
-            <button
-                className='btn btn-outline-light btn-sm w-100 mb-3 d-flex align-items-center justify-content-center'
-                onClick={addNewChat}
-                disabled={aiLoading}
-            >
-                <BsPlus className='me-2' />
-                {t('newChat')}
-            </button>
+            <div className='d-flex gap-2 mb-3'>
+                <button
+                    className='btn btn-outline-light btn-sm flex-fill d-flex align-items-center justify-content-center'
+                    onClick={addNewChat}
+                    disabled={aiLoading}
+                >
+                    <BsPlus className='me-2' />
+                    {t('newChat') || 'Tạo chat mới'}
+                </button>
+                <button
+                    className='btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center'
+                    onClick={deleteAllChats}
+                    title="Xóa tất cả chat"
+                    style={{ minWidth: '40px' }}
+                >
+                    <BsTrash />
+                </button>
+            </div>
 
             {/* Chat Sessions */}
             <div className='flex-fill overflow-auto custom-scrollbar'>

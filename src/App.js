@@ -14,9 +14,7 @@ import AdminLogin from "./view/admin/auth/Login";
 import CandidatesManagement from "./view/admin/candidates/CandidatesManagement";
 import CandidatesContact from "./view/admin/candidates/CandidatesContact";
 import EmployersManagement from "./view/admin/employers/EmployersManagement";
-import CandidateList from "./view/employer/candidates/CandidateList";
 import CandidateManagement from "./view/employer/candidates/CandidateManagement";
-import JobManagement from "./view/employer/jobs/JobManagement";
 import RecruitmentManagement from "./view/employer/jobs/RecruitmentManagement";
 import JobCreate from "./view/employer/jobs/JobCreate";
 import CompanySettings from "./view/employer/company/CompanySettings";
@@ -30,10 +28,8 @@ import Layout from "./view/candidate/layouts/Layout";
 import Profile from "./view/candidate/management/profile";
 import Resume from "./view/candidate/management/resumes";
 import Template from "./view/candidate/management/resumes/templates";
-import RoadmapView from "./view/candidate/RoadmapView";
 import RoadmapDetail from "./view/candidate/RoadmapDetail";
 import RoadmapList from "./view/candidate/RoadmapList";
-import RoadmapHome from "./view/candidate/RoadmapHome";
 import RoleSelection from "./view/common/auth/RoleSelection";
 import { AppProvider } from "./contexts/AppContext";
 
@@ -65,7 +61,6 @@ function App() {
                     <Route path="jobs" element={<JobList />} />
                     <Route path="jobs/:id" element={<Job />} />
                     <Route path="roadmap" element={<RoadmapList />} />
-                    <Route path="roadmap/create" element={<RoadmapHome />} />
                     <Route path="roadmap/:id" element={<RoadmapDetail />} />
                     <Route
                       path="candidate/*"

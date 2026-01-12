@@ -13,11 +13,11 @@ import {
     BsTools,
     BsTrash,
     BsPencil,
-    BsExclamationCircle,
-    BsInfoCircle
+    BsExclamationCircle
 } from "react-icons/bs";
 import { toast } from "react-toastify";
 import roadmapApi from "../../api/roadmap";
+import { fetchAllGeneratedLearningPaths } from "../../services/api";
 import "./RoadmapList.css";
 import { useCandidateAuthStore } from "../../stores/candidateAuthStore";
 
@@ -75,19 +75,53 @@ function RoadmapList() {
     // Fetch roadmaps from API
     useEffect(() => {
         const fetchRoadmaps = async () => {
-            // Check if user is logged in
-            const token = localStorage.getItem('candidate_jwt');
-
-            if (!token) {
-                // Use mock data for non-logged-in users
-                setRoadmaps(getMockRoadmaps());
-                setLoading(false);
-                return;
-            }
-
             try {
                 setLoading(true);
                 setError(null);
+                
+                // First, try to fetch generated learning paths from chat
+                const generatedPathsResponse = await fetchAllGeneratedLearningPaths();
+                
+                if (generatedPathsResponse.data && generatedPathsResponse.data.length > 0) {
+                    console.log('[RoadmapList] Loaded generated learning paths:', generatedPathsResponse.data.length);
+                    
+                    // Transform generated learning paths to roadmap format
+                    const transformedPaths = generatedPathsResponse.data.map(path => ({
+                        id: path.id,
+                        title: path.learning_path_name || path.field_name || 'Lộ trình học tập',
+                        description: `Lộ trình học tập ${path.field_name || ''}`,
+                        category: path.field_name || 'Learning',
+                        progress: 0,
+                        status: 'not_started',
+                        icon: getCategoryIcon(path.field_name),
+                        color: getCategoryColor(path.field_name),
+                        columns: transformLearningPathDataToColumns(path.learning_path_data),
+                        createdAt: path.created_at,
+                        isGenerated: true
+                    }));
+                    
+                    setRoadmaps(transformedPaths);
+                    
+                    // Auto-expand first roadmap if exists
+                    if (transformedPaths.length > 0) {
+                        setExpandedRoadmap(transformedPaths[0].id);
+                    }
+                    
+                    setLoading(false);
+                    return;
+                }
+                
+                // Check if user is logged in for regular roadmaps
+                const token = localStorage.getItem('candidate_jwt');
+
+                if (!token) {
+                    // Use mock data for non-logged-in users
+                    setRoadmaps(getMockRoadmaps());
+                    setLoading(false);
+                    return;
+                }
+
+                // Fallback to regular roadmaps API
                 const response = await roadmapApi.getRoadmaps();
 
                 if (response.success && response.data) {
@@ -141,6 +175,27 @@ function RoadmapList() {
                         status: lesson.status
                     }))
             }));
+    };
+
+    // Transform generated learning path data to columns format for UI
+    const transformLearningPathDataToColumns = (learningPathData) => {
+        if (!learningPathData || !learningPathData.phases) {
+            return [];
+        }
+
+        return learningPathData.phases.map((phase, phaseIndex) => ({
+            id: String(phaseIndex + 1),
+            title: phase.name || `Giai đoạn ${phaseIndex + 1}`,
+            color: getCategoryColor(learningPathData.name),
+            icon: <BsBook />,
+            items: (phase.courses || []).map((course, courseIndex) => ({
+                id: `${phaseIndex}-${courseIndex}`,
+                text: course.name || course.title || `Bài ${courseIndex + 1}`,
+                url: course.url,
+                hours: course.hours,
+                status: 'not_started'
+            }))
+        }));
     };
 
     // Mock data for demo/non-logged-in users
@@ -284,7 +339,7 @@ function RoadmapList() {
                 </div>
                 <button
                     className="create-roadmap-btn"
-                    onClick={() => navigate("/roadmap/create")}
+                    onClick={() => navigate("/")}
                 >
                     <BsPlus size={20} />
                     <span>Tạo lộ trình mới</span>
@@ -316,7 +371,7 @@ function RoadmapList() {
                     <p>Bắt đầu tạo lộ trình học tập đầu tiên của bạn</p>
                     <button
                         className="create-roadmap-btn"
-                        onClick={() => navigate("/roadmap/create")}
+                        onClick={() => navigate("/")}
                     >
                         <BsPlus size={20} />
                         <span>Tạo lộ trình mới</span>

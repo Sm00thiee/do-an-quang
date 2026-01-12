@@ -10,6 +10,7 @@ import {
 } from "react-icons/bs";
 import { toast } from "react-toastify";
 import roadmapApi from "../../api/roadmap";
+import { fetchAllGeneratedLearningPaths } from "../../services/api";
 import "./Roadmap.css";
 import RoadmapPDFViewer from "./RoadmapPDFViewer";
 
@@ -22,6 +23,7 @@ function RoadmapDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [nodeStatuses, setNodeStatuses] = useState({});
 
     // Check if user is logged in
     useEffect(() => {
@@ -29,21 +31,72 @@ function RoadmapDetail() {
         setIsLoggedIn(!!token);
     }, []);
 
+    // Load node statuses from localStorage
+    useEffect(() => {
+        if (id) {
+            const savedStatuses = localStorage.getItem(`roadmap_statuses_${id}`);
+            if (savedStatuses) {
+                try {
+                    setNodeStatuses(JSON.parse(savedStatuses));
+                } catch (err) {
+                    console.error('Error parsing saved statuses:', err);
+                }
+            }
+        }
+    }, [id]);
+
+    // Save node statuses to localStorage whenever they change
+    useEffect(() => {
+        if (id && Object.keys(nodeStatuses).length > 0) {
+            localStorage.setItem(`roadmap_statuses_${id}`, JSON.stringify(nodeStatuses));
+            
+            // Update progress percentage
+            if (roadmapData?.nodes) {
+                const totalNodes = roadmapData.nodes.length;
+                const completedNodes = Object.values(nodeStatuses).filter(status => status === 'completed').length;
+                const progress = Math.round((completedNodes / totalNodes) * 100);
+                
+                setRoadmapData(prev => ({
+                    ...prev,
+                    progress
+                }));
+            }
+        }
+    }, [nodeStatuses, id, roadmapData?.nodes?.length]);
+
     // Fetch roadmap data
     useEffect(() => {
         const fetchRoadmap = async () => {
-            const token = localStorage.getItem('candidate_jwt');
-
-            // If demo roadmap or not logged in, use mock data
-            if (id?.startsWith('demo-') || !token) {
-                setRoadmapData(getMockRoadmapData());
-                setLoading(false);
-                return;
-            }
-
             try {
                 setLoading(true);
                 setError(null);
+                
+                // First, try to fetch from generated learning paths
+                const generatedPathsResponse = await fetchAllGeneratedLearningPaths();
+                
+                if (generatedPathsResponse.data && generatedPathsResponse.data.length > 0) {
+                    // Find the specific learning path by ID
+                    const learningPath = generatedPathsResponse.data.find(path => path.id === id);
+                    
+                    if (learningPath) {
+                        console.log('[RoadmapDetail] Found generated learning path:', learningPath);
+                        const transformedData = transformGeneratedLearningPath(learningPath);
+                        setRoadmapData(transformedData);
+                        setLoading(false);
+                        return;
+                    }
+                }
+                
+                // Fallback to regular roadmaps API
+                const token = localStorage.getItem('candidate_jwt');
+
+                // If demo roadmap or not logged in, use mock data
+                if (id?.startsWith('demo-') || !token) {
+                    setRoadmapData(getMockRoadmapData());
+                    setLoading(false);
+                    return;
+                }
+
                 const response = await roadmapApi.getRoadmapById(id);
 
                 if (response.success && response.data) {
@@ -112,6 +165,58 @@ function RoadmapDetail() {
                     };
                 })
         };
+    };
+
+    // Transform generated learning path to component format
+    const transformGeneratedLearningPath = (learningPath) => {
+        const learningPathData = learningPath.learning_path_data;
+        
+        console.log('[RoadmapDetail] Transforming learning path data:', learningPathData);
+        
+        if (!learningPathData || !learningPathData.categories) {
+            console.log('[RoadmapDetail] No categories found, using mock data');
+            return getMockRoadmapData();
+        }
+
+        const categories = learningPathData.categories || [];
+        
+        console.log('[RoadmapDetail] Found', categories.length, 'categories');
+        
+        const transformedData = {
+            id: learningPath.id,
+            title: learningPath.learning_path_name || learningPath.field_name || 'Lộ trình học tập',
+            description: `Lộ trình học tập ${learningPath.field_name || ''}`,
+            createdAt: new Date(learningPath.created_at).toLocaleDateString('vi-VN'),
+            progress: 0,
+            category: learningPath.field_name,
+            status: 'not_started',
+            nodes: categories.map((category, categoryIndex) => {
+                const lessons = category.lessons || [];
+                
+                const nodeId = `category-${categoryIndex}`;
+                
+                return {
+                    id: nodeId,
+                    title: category.name || `Giai đoạn ${categoryIndex + 1}`,
+                    level: getLevelFromIndex(categoryIndex),
+                    duration: `${category.totalStudyTime || 0} giờ`,
+                    status: 'pending',
+                    skills: lessons.map(lesson => lesson.lessonTitle).slice(0, 4),
+                    resources: lessons.map(lesson => lesson.lessonTitle),
+                    lessons: lessons.map((lesson, lessonIndex) => ({
+                        id: `${categoryIndex}-${lessonIndex}`,
+                        title: lesson.lessonTitle || `Bài ${lessonIndex + 1}`,
+                        url: lesson.lessonUrl,
+                        hours: lesson.studyTime,
+                        status: 'not_started'
+                    }))
+                };
+            })
+        };
+        
+        console.log('[RoadmapDetail] Transformed data:', transformedData);
+        
+        return transformedData;
     };
 
     // Helper functions
@@ -300,29 +405,65 @@ function RoadmapDetail() {
         setIsPDFViewerOpen(false);
     };
 
-    const handleMarkComplete = async (nodeId) => {
-        if (!isLoggedIn) {
-            toast.warning('Vui lòng đăng nhập để lưu tiến độ');
-            return;
-        }
-
+    const handleStartLearning = async (nodeId) => {
         try {
-            // Find the node and its first lesson
-            const node = roadmapData.nodes.find(n => n.id === nodeId);
-            if (node?.lessons?.[0]) {
-                await roadmapApi.updateLessonStatus(node.lessons[0].id, 'completed');
+            // Update node status to in-progress
+            setNodeStatuses(prev => ({
+                ...prev,
+                [nodeId]: 'in-progress'
+            }));
 
-                // Update local state
-                setRoadmapData(prev => ({
-                    ...prev,
-                    nodes: prev.nodes.map(n =>
-                        n.id === nodeId
-                            ? { ...n, status: 'completed' }
-                            : n
-                    )
-                }));
+            // Update roadmap data
+            setRoadmapData(prev => ({
+                ...prev,
+                nodes: prev.nodes.map(n =>
+                    n.id === nodeId
+                        ? { ...n, status: 'in-progress' }
+                        : n
+                )
+            }));
 
-                toast.success('Đã đánh dấu hoàn thành!');
+            toast.success('Đã bắt đầu học!');
+
+            // If logged in and this is a real roadmap (not generated), update on server
+            if (isLoggedIn && roadmapData?.nodes?.find(n => n.id === nodeId)?.lessons?.[0]?.id) {
+                const node = roadmapData.nodes.find(n => n.id === nodeId);
+                if (node?.lessons?.[0]) {
+                    await roadmapApi.updateLessonStatus(node.lessons[0].id, 'in-progress');
+                }
+            }
+        } catch (err) {
+            console.error('Error starting learning:', err);
+            toast.error('Không thể cập nhật. Vui lòng thử lại.');
+        }
+    };
+
+    const handleMarkComplete = async (nodeId) => {
+        try {
+            // Update node status to completed
+            setNodeStatuses(prev => ({
+                ...prev,
+                [nodeId]: 'completed'
+            }));
+
+            // Update roadmap data
+            setRoadmapData(prev => ({
+                ...prev,
+                nodes: prev.nodes.map(n =>
+                    n.id === nodeId
+                        ? { ...n, status: 'completed' }
+                        : n
+                )
+            }));
+
+            toast.success('Đã đánh dấu hoàn thành!');
+
+            // If logged in and this is a real roadmap (not generated), update on server
+            if (isLoggedIn && roadmapData?.nodes?.find(n => n.id === nodeId)?.lessons?.[0]?.id) {
+                const node = roadmapData.nodes.find(n => n.id === nodeId);
+                if (node?.lessons?.[0]) {
+                    await roadmapApi.updateLessonStatus(node.lessons[0].id, 'completed');
+                }
             }
         } catch (err) {
             console.error('Error marking complete:', err);
@@ -412,21 +553,21 @@ function RoadmapDetail() {
 
                         {/* Node Card */}
                         <div
-                            className={`timeline-node ${node.status} ${expandedNodes.includes(node.id) ? "expanded" : ""
+                            className={`timeline-node ${nodeStatuses[node.id] || node.status} ${expandedNodes.includes(node.id) ? "expanded" : ""
                                 }`}
                             onClick={() => toggleNode(node.id)}
                         >
                             <div className="node-header">
                                 <div className="node-status-indicator">
-                                    {getStatusIcon(node.status)}
+                                    {getStatusIcon(nodeStatuses[node.id] || node.status)}
                                 </div>
                                 <div className="node-main-info">
                                     <h3 className="node-title">{node.title}</h3>
                                     <div className="node-badges">
                                         <span className="badge badge-level">{node.level}</span>
                                         <span className="badge badge-duration">⏱ {node.duration}</span>
-                                        <span className={`badge badge-status ${node.status}`}>
-                                            {getStatusLabel(node.status)}
+                                        <span className={`badge badge-status ${nodeStatuses[node.id] || node.status}`}>
+                                            {getStatusLabel(nodeStatuses[node.id] || node.status)}
                                         </span>
                                     </div>
                                 </div>
@@ -460,8 +601,18 @@ function RoadmapDetail() {
                                     </div>
 
                                     <div className="node-actions">
-                                        <button className="btn-primary">Bắt đầu học</button>
-                                        {node.status !== 'completed' && (
+                                        {(nodeStatuses[node.id] !== 'completed' && nodeStatuses[node.id] !== 'in-progress') && (
+                                            <button 
+                                                className="btn-primary"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStartLearning(node.id);
+                                                }}
+                                            >
+                                                Bắt đầu học
+                                            </button>
+                                        )}
+                                        {nodeStatuses[node.id] !== 'completed' && (
                                             <button
                                                 className="btn-secondary"
                                                 onClick={(e) => {

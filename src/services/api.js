@@ -1028,3 +1028,168 @@ export const getSessionStats = async (sessionId) => {
     return null;
   }
 };
+
+// Save generated learning path to database
+export const saveGeneratedLearningPath = async (sessionId, learningPath, fieldId = null, fieldName = null) => {
+  if (!supabaseChat) {
+    return {
+      data: null,
+      error: 'Chat Supabase instance is not configured',
+      status: 500
+    };
+  }
+
+  try {
+    console.log('[API] Saving generated learning path:', { sessionId, fieldId, fieldName, name: learningPath.name });
+    
+    // First, try to get the chat_session_id from the database
+    const { data: sessionData, error: sessionError } = await supabaseChat
+      .from('chat_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    
+    let chatSessionId = sessionData?.id;
+    
+    // If no chat session exists, create one
+    if (!chatSessionId) {
+      console.log('[API] Creating chat session for learning path');
+      const { data: newSession, error: createError } = await supabaseChat
+        .from('chat_sessions')
+        .insert([{ session_id: sessionId, field_id: fieldId }])
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('[API] Error creating chat session:', createError);
+        return {
+          data: null,
+          error: createError.message,
+          status: 400
+        };
+      }
+      
+      chatSessionId = newSession.id;
+    }
+    
+    const { data, error } = await supabaseChat
+      .from('generated_learning_paths')
+      .insert([{
+        chat_session_id: chatSessionId,
+        session_id: sessionId,
+        field_id: fieldId,
+        field_name: fieldName || 'Unknown Field',
+        learning_path_name: learningPath.name || learningPath.title || 'Lộ trình học tập',
+        learning_path_data: learningPath,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[API] Error saving learning path:', error);
+      return {
+        data: null,
+        error: error.message,
+        status: 400
+      };
+    }
+
+    console.log('[API] Learning path saved successfully:', data.id);
+    return {
+      data,
+      error: null,
+      status: 200
+    };
+  } catch (error) {
+    console.error('[API] Exception saving learning path:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: 500
+    };
+  }
+};
+
+// Delete learning paths for a chat session
+export const deleteGeneratedLearningPathsBySession = async (sessionId) => {
+  if (!supabaseChat) {
+    return {
+      data: null,
+      error: 'Chat Supabase instance is not configured',
+      status: 500
+    };
+  }
+
+  try {
+    console.log('[API] Deleting generated learning paths for session:', sessionId);
+    
+    const { error, count } = await supabaseChat
+      .from('generated_learning_paths')
+      .delete({ count: 'exact' })
+      .eq('session_id', sessionId);
+
+    if (error) {
+      console.error('[API] Error deleting learning paths:', error);
+      return {
+        data: null,
+        error: error.message,
+        status: 400
+      };
+    }
+
+    console.log('[API] Deleted', count, 'learning path(s)');
+    return {
+      data: { count },
+      error: null,
+      status: 200
+    };
+  } catch (error) {
+    console.error('[API] Exception deleting learning paths:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: 500
+    };
+  }
+};
+
+// Get all generated learning paths for display on /roadmap page
+export const fetchAllGeneratedLearningPaths = async () => {
+  if (!supabaseChat) {
+    return {
+      data: null,
+      error: 'Chat Supabase instance is not configured',
+      status: 500
+    };
+  }
+
+  try {
+    const { data, error } = await supabaseChat
+      .from('generated_learning_paths')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[API] Error fetching generated learning paths:', error);
+      return {
+        data: null,
+        error: error.message,
+        status: 400
+      };
+    }
+
+    return {
+      data: data || [],
+      error: null,
+      status: 200
+    };
+  } catch (error) {
+    console.error('[API] Exception fetching generated learning paths:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: 500
+    };
+  }
+};

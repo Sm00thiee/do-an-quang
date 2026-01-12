@@ -14,6 +14,7 @@ import remarkGfm from 'remark-gfm';
 import { getFields, getMessages, createMessage, streamChatResponse, submitChatMessage } from '../../services/chatService';
 import { getAllChatSessions, deleteChatSession, deleteAllChatSessions, createSession, generateSessionId, storeSessionId } from '../../services/sessionService';
 import csvService from '../../services/csvService';
+import { saveGeneratedLearningPath, deleteGeneratedLearningPathsBySession } from '../../services/api';
 
 function Home() {
   const { t } = useTranslation();
@@ -46,20 +47,42 @@ function Home() {
     const loadChatSessions = async () => {
       try {
         const sessions = await getAllChatSessions();
-        setChatSessions(sessions || []);
+        console.log('[Home] Loaded chat sessions:', sessions);
         
-        // If we have a current sessionId and it exists in the list, set it as active
-        if (sessionId && sessions.some(s => s.session_id === sessionId)) {
+        // Check if current session is in the loaded sessions
+        const currentSessionExists = sessions.some(s => s.session_id === sessionId);
+        
+        let allSessions = sessions || [];
+        
+        // If current session is not in database, create a local entry for it
+        if (!currentSessionExists && sessionId) {
+          const localSession = {
+            id: `local-${sessionId}`,
+            session_id: sessionId,
+            field_id: selectedField?.id || null,
+            question_count: questionCount,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            messages: messages,
+            field: selectedField
+          };
+          allSessions = [localSession, ...allSessions];
+        }
+        
+        setChatSessions(allSessions);
+        
+        // Set active session
+        if (sessionId && allSessions.some(s => s.session_id === sessionId)) {
           setActiveSession(sessionId);
-        } else if (sessions.length > 0) {
-          setActiveSession(sessions[0].session_id);
+        } else if (allSessions.length > 0) {
+          setActiveSession(allSessions[0].session_id);
         }
       } catch (error) {
         console.error('Error loading chat sessions:', error);
       }
     };
     loadChatSessions();
-  }, [sessionId]);
+  }, [sessionId, messages.length, selectedField, questionCount]);
 
   // Load fields on mount
   useEffect(() => {
@@ -160,6 +183,19 @@ function Home() {
         // Save AI message with formatted learning path
         const aiMsg = await createMessage(sessionId, 'assistant', formattedResponse);
         setMessages(prev => [...prev, aiMsg]);
+        
+        // Save the generated learning path to database
+        try {
+          const saveResult = await saveGeneratedLearningPath(sessionId, learningPath, selectedField?.id, selectedField?.name);
+          if (saveResult.error) {
+            console.error('[Home] Error saving learning path:', saveResult.error);
+          } else {
+            console.log('[Home] Learning path saved successfully:', saveResult.data?.id);
+          }
+        } catch (error) {
+          console.error('[Home] Exception saving learning path:', error);
+        }
+        
         setIsLoading(false);
         return;
       }
@@ -282,20 +318,69 @@ function Home() {
     
     try {
       console.log('[Home] Deleting chat session:', session.id);
-      await deleteChatSession(session.id);
+      
+      // Check if it's a local session (ID starts with "local-")
+      const isLocalSession = typeof session.id === 'string' && session.id.startsWith('local-');
+      
+      if (!isLocalSession) {
+        // Delete generated learning paths for this session
+        try {
+          const deletePathsResult = await deleteGeneratedLearningPathsBySession(session.session_id);
+          if (deletePathsResult.error) {
+            console.error('[Home] Error deleting learning paths:', deletePathsResult.error);
+          } else {
+            console.log('[Home] Deleted', deletePathsResult.data?.count, 'learning path(s)');
+          }
+        } catch (error) {
+          console.error('[Home] Exception deleting learning paths:', error);
+        }
+        
+        // Only try to delete from Supabase if it's not a local session
+        await deleteChatSession(session.id);
+      } else {
+        console.log('[Home] Skipping Supabase delete for local session');
+        // Clear localStorage for this session
+        const messagesKey = `chat_messages_${session.session_id}`;
+        localStorage.removeItem(messagesKey);
+      }
       
       // Remove from local state
-      setChatSessions(prev => prev.filter(s => s.id !== session.id));
+      const remaining = chatSessions.filter(s => s.id !== session.id);
+      setChatSessions(remaining);
       
-      // If deleted session was active, switch to another or clear
+      // If deleted session was active
       if (activeSession === session.session_id) {
-        const remaining = chatSessions.filter(s => s.id !== session.id);
         if (remaining.length > 0) {
-          setActiveSession(remaining[0].session_id);
+          // Switch to another existing session
+          const nextSession = remaining[0];
+          setActiveSession(nextSession.session_id);
+          // Load messages for the next session
+          const msgs = await getMessages(nextSession.session_id);
+          setMessages(msgs || []);
+          setQuestionCount(msgs.filter(m => m.role === 'user').length);
         } else {
-          setActiveSession(null);
+          // No sessions left - create a new one
+          console.log('[Home] No sessions left, creating a new one');
+          const newSessionId = generateSessionId();
+          localStorage.setItem('currentSessionId', newSessionId);
+          
+          // Create new local session
+          const newLocalSession = {
+            id: `local-${newSessionId}`,
+            session_id: newSessionId,
+            field_id: null,
+            question_count: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            messages: [],
+            field: null
+          };
+          
+          setChatSessions([newLocalSession]);
+          setActiveSession(newSessionId);
           setMessages([]);
           setQuestionCount(0);
+          setSelectedField(null);
         }
       }
     } catch (error) {
@@ -312,18 +397,49 @@ function Home() {
     
     try {
       console.log('[Home] Deleting all chat sessions');
-      const result = await deleteAllChatSessions();
       
-      console.log('[Home] Deleted', result.count, 'chat sessions');
+      // Delete from Supabase (only non-local sessions)
+      let deletedCount = 0;
+      try {
+        const result = await deleteAllChatSessions();
+        deletedCount = result.count || 0;
+        console.log('[Home] Deleted', deletedCount, 'chat sessions from Supabase');
+      } catch (error) {
+        console.warn('[Home] Could not delete from Supabase:', error);
+      }
       
-      // Clear all local state
-      setChatSessions([]);
-      setActiveSession(null);
+      // Clear localStorage for all sessions
+      chatSessions.forEach(session => {
+        if (session.session_id) {
+          const messagesKey = `chat_messages_${session.session_id}`;
+          localStorage.removeItem(messagesKey);
+        }
+      });
+      
+      // Create a new session
+      const newSessionId = generateSessionId();
+      localStorage.setItem('currentSessionId', newSessionId);
+      
+      const newLocalSession = {
+        id: `local-${newSessionId}`,
+        session_id: newSessionId,
+        field_id: null,
+        question_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        messages: [],
+        field: null
+      };
+      
+      // Reset all state with new session
+      setChatSessions([newLocalSession]);
+      setActiveSession(newSessionId);
       setMessages([]);
       setQuestionCount(0);
       setSelectedField(null);
       
-      alert(`Đã xóa thành công ${result.count} cuộc trò chuyện`);
+      const totalDeleted = chatSessions.length;
+      alert(`Đã xóa thành công ${totalDeleted} cuộc trò chuyện và tạo chat mới`);
     } catch (error) {
       console.error('[Home] Delete all exception:', error);
       alert('Đã xảy ra lỗi khi xóa tất cả cuộc trò chuyện');
