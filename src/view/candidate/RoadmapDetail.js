@@ -5,25 +5,31 @@ import {
     BsCircle,
     BsArrowLeft,
     BsDownload,
-    BsEye,
     BsExclamationCircle
 } from "react-icons/bs";
 import { toast } from "react-toastify";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import roadmapApi from "../../api/roadmap";
 import { fetchAllGeneratedLearningPaths } from "../../services/api";
 import "./Roadmap.css";
 import RoadmapPDFViewer from "./RoadmapPDFViewer";
+import LessonDetailDrawer from "./LessonDetailDrawer";
+import { getLessonById } from "../../data/sampleLessons";
 
 function RoadmapDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [expandedNodes, setExpandedNodes] = useState([]);
     const [isPDFViewerOpen, setIsPDFViewerOpen] = useState(false);
+    const [isLessonDrawerOpen, setIsLessonDrawerOpen] = useState(false);
+    const [selectedLesson, setSelectedLesson] = useState(null);
     const [roadmapData, setRoadmapData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [nodeStatuses, setNodeStatuses] = useState({});
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Check if user is logged in
     useEffect(() => {
@@ -397,12 +403,138 @@ function RoadmapDetail() {
         }
     };
 
+    /**
+     * Convert Google Drive URL to direct download URL
+     */
+    const convertGoogleDriveUrl = (url) => {
+        try {
+            const match = url.match(/\/d\/([^/]+)/);
+            if (match && match[1]) {
+                const fileId = match[1];
+                return `https://drive.google.com/uc?export=download&id=${fileId}`;
+            }
+            return url;
+        } catch (error) {
+            console.error('Error converting Google Drive URL:', error);
+            return url;
+        }
+    };
+
+    const handleDownloadPDF = async () => {
+        if (isDownloading) return;
+        
+        try {
+            setIsDownloading(true);
+            toast.info("Đang chuẩn bị tải xuống...");
+            
+            // Create a new JSZip instance
+            const zip = new JSZip();
+            
+            // Create a folder for the roadmap
+            const roadmapFolder = zip.folder(roadmapData?.title || "Roadmap_Lessons");
+            
+            // Collect all PDF URLs from the roadmap
+            const pdfUrls = [];
+            
+            if (roadmapData && roadmapData.nodes) {
+                roadmapData.nodes.forEach((node, index) => {
+                    if (node.resources) {
+                        node.resources.forEach((resource, resourceIndex) => {
+                            // For now, create entries for each resource
+                            // In future, if resources have URLs, use them
+                            pdfUrls.push({
+                                url: null, // Resources don't have URLs yet in this structure
+                                filename: `${index + 1}-${resourceIndex + 1}_${resource}.txt`,
+                                title: resource,
+                                nodeTitle: node.title
+                            });
+                        });
+                    }
+                });
+            }
+            
+            if (pdfUrls.length === 0) {
+                setIsDownloading(false);
+                toast.warning("Không tìm thấy tài liệu nào trong lộ trình này.");
+                return;
+            }
+            
+            console.log(`Found ${pdfUrls.length} resources to download`);
+            
+            // Process each resource
+            for (let i = 0; i < pdfUrls.length; i++) {
+                const pdfInfo = pdfUrls[i];
+                
+                try {
+                    if (pdfInfo.url) {
+                        const downloadUrl = convertGoogleDriveUrl(pdfInfo.url);
+                        const linkContent = `Tên tài liệu: ${pdfInfo.title}\n\nNode: ${pdfInfo.nodeTitle}\n\nLink tải trực tiếp:\n${downloadUrl}\n\nLink xem:\n${pdfInfo.url}\n\nLưu ý: Vui lòng nhấp vào link trên để tải file PDF.`;
+                        roadmapFolder.file(pdfInfo.filename, linkContent);
+                    } else {
+                        // Create placeholder for resources without URLs
+                        const content = `Tài nguyên: ${pdfInfo.title}\n\nNode: ${pdfInfo.nodeTitle}\n\nNội dung này chưa có link tải xuống.\nVui lòng tìm kiếm "${pdfInfo.title}" trên Google để tìm tài liệu liên quan.`;
+                        roadmapFolder.file(pdfInfo.filename, content);
+                    }
+                } catch (error) {
+                    console.error(`Failed to process ${pdfInfo.filename}:`, error);
+                }
+            }
+            
+            // Add a README file
+            const readmeContent = `# ${roadmapData?.title || 'Roadmap'} - Tài liệu học tập\n\n` +
+                `Tổng số tài nguyên: ${pdfUrls.length}\n\n` +
+                `## Hướng dẫn:\n` +
+                `Các file trong thư mục này chứa thông tin về tài nguyên học tập.\n` +
+                `Vui lòng mở từng file để xem chi tiết và link tải xuống (nếu có).\n\n` +
+                `## Danh sách tài nguyên:\n` +
+                roadmapData.nodes.map((node, idx) => 
+                    `${idx + 1}. ${node.title}\n   - ${node.resources.join('\n   - ')}\n`
+                ).join('\n');
+            
+            roadmapFolder.file("README.txt", readmeContent);
+            
+            // Generate the ZIP file
+            toast.info("Đang nén file...");
+            const zipBlob = await zip.generateAsync({ 
+                type: "blob",
+                compression: "DEFLATE",
+                compressionOptions: { level: 6 }
+            });
+            
+            // Save the ZIP file
+            const filename = `${roadmapData?.title || 'Roadmap'}_Lessons.zip`;
+            saveAs(zipBlob, filename);
+            
+            setIsDownloading(false);
+            toast.success(`Đã tải xuống file ZIP với ${pdfUrls.length} tài nguyên!`);
+        } catch (error) {
+            console.error("Error creating ZIP file:", error);
+            setIsDownloading(false);
+            toast.error("Có lỗi xảy ra khi tạo file ZIP. Vui lòng thử lại.");
+        }
+    };
+
     const handleViewPDF = () => {
         setIsPDFViewerOpen(true);
     };
 
     const handleClosePDF = () => {
         setIsPDFViewerOpen(false);
+    };
+
+    const handleOpenLessonDrawer = (lessonKey) => {
+        const lesson = getLessonById(lessonKey);
+        if (lesson) {
+            setSelectedLesson(lesson);
+            setIsLessonDrawerOpen(true);
+        } else {
+            toast.warning('Nội dung bài học chưa có sẵn');
+        }
+    };
+
+    const handleCloseLessonDrawer = () => {
+        setIsLessonDrawerOpen(false);
+        setSelectedLesson(null);
     };
 
     const handleStartLearning = async (nodeId) => {
@@ -520,13 +652,14 @@ function RoadmapDetail() {
                     </div>
                 </div>
                 <div className="header-actions">
-                    <button className="view-pdf-btn" onClick={handleViewPDF}>
-                        <BsEye size={18} />
-                        <span>Xem PDF</span>
-                    </button>
-                    <button className="export-btn" onClick={handleViewPDF}>
+                    <button 
+                        className="export-btn" 
+                        onClick={handleDownloadPDF}
+                        disabled={isDownloading}
+                        style={{ opacity: isDownloading ? 0.6 : 1 }}
+                    >
                         <BsDownload size={18} />
-                        <span>Xuất PDF</span>
+                        <span>{isDownloading ? 'Đang tải...' : 'Download PDF'}</span>
                     </button>
                 </div>
             </div>
@@ -592,7 +725,22 @@ function RoadmapDetail() {
                                         <h4 className="section-title">Tài nguyên học tập:</h4>
                                         <ul className="resources-list">
                                             {node.resources.map((resource, idx) => (
-                                                <li key={idx} className="resource-item">
+                                                <li 
+                                                    key={idx} 
+                                                    className="resource-item clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // Map resource to lesson key
+                                                        // For demo, we'll use predefined mappings
+                                                        const lessonMappings = {
+                                                            'Thiết kế UI/UX': 'uiux-design',
+                                                            'Khái niệm cơ bản của Marketing: 4P, 7P': 'marketing-4p-7p',
+                                                            'Hành vi người tiêu dùng (Consumer Behavior)': 'consumer-behavior'
+                                                        };
+                                                        const lessonKey = lessonMappings[resource] || 'uiux-design';
+                                                        handleOpenLessonDrawer(lessonKey);
+                                                    }}
+                                                >
                                                     <span className="resource-icon">📚</span>
                                                     {resource}
                                                 </li>
@@ -636,6 +784,14 @@ function RoadmapDetail() {
                 isOpen={isPDFViewerOpen}
                 onClose={handleClosePDF}
                 roadmapData={getPdfData()}
+            />
+
+            {/* Lesson Detail Drawer */}
+            <LessonDetailDrawer
+                isOpen={isLessonDrawerOpen}
+                onClose={handleCloseLessonDrawer}
+                lesson={selectedLesson}
+                roadmapData={roadmapData}
             />
         </div>
     );

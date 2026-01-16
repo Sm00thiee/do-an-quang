@@ -1,0 +1,374 @@
+// Chat Submit Edge Function
+// Accepts user messages and processes them synchronously
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { BaseFunction, createEdgeFunctionHandler } from '../shared/base-function.ts';
+import { ErrorHandler } from '../shared/error-handler.ts';
+import { generateJobId, estimateProcessingTime } from '../shared/utils.ts';
+import { edgeLogger, timeStart, timeEnd, timeFunction } from '../shared/logger.ts';
+import { createGeminiClient } from '../shared/gemini-client.ts';
+
+interface ChatSubmitRequest {
+  session_id: string;
+  message: string;
+  field_id?: string;
+  priority?: number;
+}
+
+interface ChatSubmitResponse {
+  job_id: string;
+  status: 'completed';
+  response: string;
+  processing_time_ms: number;
+  tokens_used?: number;
+  model?: string;
+}
+
+class ChatSubmitFunction extends BaseFunction {
+  private logger = edgeLogger.child('ChatSubmit');
+  private geminiClient: any = null;
+
+  constructor() {
+    super();
+  }
+
+  private getGeminiClient() {
+    if (!this.geminiClient) {
+      try {
+        this.geminiClient = createGeminiClient();
+        this.logger.info('Gemini client initialized successfully');
+      } catch (error) {
+        this.logger.warn('Gemini client initialization failed, will use fallback', {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+    return this.geminiClient;
+  }
+
+  async handleRequest(
+    req: Request,
+    context: RequestContext
+  ): Promise<Response> {
+    const requestId = crypto.randomUUID();
+    edgeLogger.setContext({ requestId });
+    
+    this.logger.info('Request started', {
+      method: req.method,
+      url: req.url,
+      clientIP: context.clientIP,
+      userAgent: context.userAgent
+    });
+
+    try {
+      return await timeFunction('chat-submit-request', async () => {
+        // Only allow POST requests
+        if (req.method !== 'POST') {
+          this.logger.warn('Invalid method attempted', { method: req.method });
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.INVALID_INPUT,
+            'Method not allowed. Use POST.'
+          );
+        }
+
+        // Parse request body
+        let session_id, message, field_id, priority;
+        try {
+          const body = await this.parseRequestBody<ChatSubmitRequest>(req);
+          session_id = body.session_id;
+          message = body.message;
+          field_id = body.field_id;
+          priority = body.priority || 0;
+          
+          this.logger.debug('Request parsed', {
+            session_id,
+            message_length: message?.length,
+            field_id,
+            priority
+          });
+        } catch (parseError) {
+          this.logger.error('Failed to parse request body', parseError instanceof Error ? parseError : new Error(String(parseError)));
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.INVALID_INPUT,
+            `Failed to parse request: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+          );
+        }
+
+        // Validate required fields
+        if (!session_id || !message) {
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.INVALID_INPUT,
+            'session_id and message are required'
+          );
+        }
+
+        // Validate message content
+        if (message.length > 1000) {
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.INVALID_INPUT,
+            'Message exceeds maximum length of 1000 characters'
+          );
+        }
+
+      const startTime = Date.now();
+
+      try {
+        timeStart('session-validation');
+        
+        // Check session exists and is valid
+        const session = await this.db.getChatSession(session_id);
+        if (!session) {
+          this.logger.warn('Invalid session', { session_id });
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.NOT_FOUND,
+            'Invalid session'
+          );
+        }
+
+        // Validate that we have a valid UUID for the session
+        if (!session.id || typeof session.id !== 'string') {
+          this.logger.error('Invalid session UUID', {
+            session_id,
+            session_id_type: typeof session.id,
+            session_id_value: session.id
+          });
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.NOT_FOUND,
+            'Invalid session ID format'
+          );
+        }
+
+        this.logger.debug('Session found', {
+          session_id: session.id,
+          session_session_id: session.session_id,
+          created_at: session.created_at,
+          question_count: session.question_count
+        });
+
+        // Check session age (24 hours)
+        const sessionAge = Date.now() - new Date(session.created_at).getTime();
+        if (sessionAge > 24 * 60 * 60 * 1000) {
+          this.logger.warn('Session expired', {
+            session_id,
+            session_age_ms: sessionAge,
+            max_age_ms: 24 * 60 * 60 * 1000
+          });
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.SESSION_EXPIRED,
+            'Session expired'
+          );
+        }
+
+        // Check question limits
+        if (session.question_count >= 10) {
+          this.logger.warn('Question limit reached', {
+            session_id,
+            question_count: session.question_count,
+            limit: 10
+          });
+          throw ErrorHandler.createError(
+            ErrorHandler.ERROR_CODES.RESOURCE_LIMIT_EXCEEDED,
+            'Question limit reached for this session'
+          );
+        }
+        
+        timeEnd('session-validation');
+
+        timeStart('message-creation');
+        
+        // Create user message
+        const userMessage = await this.db.createChatMessage(
+          session.id,
+          'user',
+          message
+        );
+
+        this.logger.debug('User message created', {
+          message_id: userMessage.id,
+          session_id: session.id,
+          session_session_id: session.session_id
+        });
+        
+        timeEnd('message-creation');
+
+        timeStart('conversation-history');
+        
+        // Get conversation history for context
+        let conversationHistory = [];
+        try {
+          conversationHistory = await this.getConversationHistory(session.id);
+          
+          this.logger.debug('Conversation history retrieved', {
+            session_id: session.id,
+            history_length: conversationHistory.length
+          });
+        } catch (historyError) {
+          this.logger.warn('Failed to get conversation history, continuing without it', {
+            session_id: session.id,
+            error: historyError instanceof Error ? historyError.message : String(historyError)
+          });
+          conversationHistory = [];
+        }
+        
+        timeEnd('conversation-history');
+
+        timeStart('prompt-generation');
+        
+        // Generate field-specific prompt
+        const prompt = this.geminiClient.generateFieldSpecificPrompt(
+          message,
+          field_id
+        );
+        
+        this.logger.debug('Prompt generated', {
+          field_id,
+          prompt_length: prompt.length,
+          message_length: message.length
+        });
+        
+        timeEnd('prompt-generation');
+
+        timeStart('gemini-api-call');
+        
+        // Get Gemini response synchronously
+        let geminiResponse;
+        const client = this.getGeminiClient();
+        
+        if (client) {
+          try {
+            geminiResponse = await client.generateResponse(
+              prompt,
+              field_id,
+              conversationHistory
+            );
+            this.logger.info('Gemini API response received', {
+              tokens_used: geminiResponse.tokensUsed,
+              model: geminiResponse.model
+            });
+          } catch (geminiError) {
+            this.logger.error('Gemini API call failed, using fallback response', geminiError instanceof Error ? geminiError : new Error(String(geminiError)), {
+              session_id: session.id,
+              field_id,
+              prompt_length: prompt.length,
+              error_message: geminiError instanceof Error ? geminiError.message : String(geminiError)
+            });
+            geminiResponse = null;
+          }
+        } else {
+          this.logger.warn('Gemini client not available, using fallback response');
+          geminiResponse = null;
+        }
+        
+        // Use fallback if Gemini failed or is unavailable
+        if (!geminiResponse) {
+          geminiResponse = {
+            content: `Thank you for your question about ${field_id || 'this topic'}. As an AI learning assistant, I can help guide you through your educational journey. While I'm experiencing some technical difficulties at the moment, I can still provide general guidance. What specific aspect would you like to know more about?`,
+            tokensUsed: 0,
+            model: 'fallback'
+          };
+        }
+        
+        timeEnd('gemini-api-call');
+        
+        this.logger.info('Gemini response received', {
+          session_id: session.id,
+          model: geminiResponse.model,
+          tokens_used: geminiResponse.tokensUsed,
+          response_length: geminiResponse.content.length
+        });
+
+        timeStart('assistant-message-creation');
+        
+        // Save assistant message
+        const assistantMessage = await this.db.createChatMessage(
+          session.id,
+          'assistant',
+          geminiResponse.content
+        );
+        
+        this.logger.debug('Assistant message created', {
+          message_id: assistantMessage.id,
+          session_id: session.id,
+          content_length: geminiResponse.content.length
+        });
+        
+        timeEnd('assistant-message-creation');
+
+        timeStart('session-stats-update');
+        
+        // Increment question count
+        await this.db.incrementQuestionCount(session.id);
+        
+        this.logger.debug('Session stats updated', {
+          session_id: session.id
+        });
+        
+        timeEnd('session-stats-update');
+
+        const processingTime = Date.now() - startTime;
+
+        const response: ChatSubmitResponse = {
+          job_id: generateJobId(),
+          status: 'completed',
+          response: geminiResponse.content,
+          processing_time_ms: processingTime,
+          tokens_used: geminiResponse.tokensUsed,
+          model: geminiResponse.model
+        };
+
+        this.logger.info('Request completed successfully', {
+          session_id: session.id,
+          response_length: geminiResponse.content.length,
+          processing_time_ms: processingTime,
+          tokens_used: geminiResponse.tokensUsed
+        });
+
+        return this.successResponse(response);
+
+      } catch (error) {
+        this.logger.error('Request failed', error instanceof Error ? error : new Error(String(error)), {
+          session_id,
+          message_length: message?.length,
+          field_id,
+          priority,
+          error_message: error instanceof Error ? error.message : String(error),
+          error_stack: error instanceof Error ? error.stack : undefined
+        });
+        
+        throw error;
+      }
+      });
+    } catch (outerError) {
+      this.logger.error('Outer error caught', outerError instanceof Error ? outerError : new Error(String(outerError)), {
+        error_message: outerError instanceof Error ? outerError.message : String(outerError),
+        error_stack: outerError instanceof Error ? outerError.stack : undefined
+      });
+      throw outerError;
+    }
+  }
+
+  /**
+   * Get conversation history for context
+   */
+  private async getConversationHistory(sessionId: string): Promise<Array<{ role: string; content: string }>> {
+    try {
+      const messages = await this.db.getChatMessages(sessionId, 10); // Get last 10 messages
+      
+      return messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    } catch (error) {
+      this.logger.error('Failed to get conversation history', error instanceof Error ? error : new Error(String(error)), {
+        session_id: sessionId
+      });
+      return [];
+    }
+  }
+}
+
+// Create and export the handler
+const handler = createEdgeFunctionHandler(ChatSubmitFunction);
+
+// Serve the function
+serve(handler);

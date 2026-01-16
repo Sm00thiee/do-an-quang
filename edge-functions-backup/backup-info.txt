@@ -1,0 +1,28 @@
+Edge Functions Backup - 2026-01-13 09:34:50
+================================================================
+
+ANALYSIS:
+---------
+Remote Functions (Deployed on Supabase):
+1. chat-process (version 15) - ✅ KEEP (used in project)
+2. chat-status (version 11) - ✅ KEEP (used in project)
+3. chat-submit (version 52) - ✅ KEEP (used in project)
+4. queue-worker (version 11) - ✅ KEEP (used in project)
+5. csv-export (version 2) - ❌ DELETE (not used in current project)
+
+Local Functions (in supabase/functions/):
+- chat-process/
+- chat-status/
+- chat-submit/
+- queue-worker/
+
+UNUSED FUNCTION TO DELETE:
+---------------------------
+Name: csv-export
+ID: 03daa828-9e75-492b-ac2a-ded09b6fed07
+Version: 2
+Status: ACTIVE
+Last Updated: 2025-12-23 05:12:11 UTC
+
+Note: Function source code could not be downloaded due to CLI compatibility issues.
+If needed, the function can be recovered from Supabase dashboard or git history.

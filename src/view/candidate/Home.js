@@ -15,6 +15,8 @@ import { getFields, getMessages, createMessage, streamChatResponse, submitChatMe
 import { getAllChatSessions, deleteChatSession, deleteAllChatSessions, createSession, generateSessionId, storeSessionId } from '../../services/sessionService';
 import csvService from '../../services/csvService';
 import { saveGeneratedLearningPath, deleteGeneratedLearningPathsBySession } from '../../services/api';
+import ChatLessonDrawer from '../../components/ChatLessonDrawer';
+import { getLessonById } from '../../data/sampleLessons';
 
 function Home() {
   const { t } = useTranslation();
@@ -41,6 +43,11 @@ function Home() {
   const [messageInput, setMessageInput] = useState("");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Lesson drawer state
+  const [isLessonDrawerOpen, setIsLessonDrawerOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+
 
   // Load all chat sessions on mount
   useEffect(() => {
@@ -272,6 +279,99 @@ function Home() {
     if (field) {
       setSelectedField(field);
     }
+  };
+
+  // Handle lesson click from chat message
+  const handleLessonClick = (lessonTitle, lessonUrl) => {
+    console.log('[Home] Lesson clicked:', { lessonTitle, lessonUrl });
+    
+    // Try to get lesson data from sampleLessons
+    const lessonData = getLessonById(lessonTitle);
+    
+    if (lessonData) {
+      console.log('[Home] Found lesson data:', lessonData);
+      setSelectedLesson(lessonData);
+    } else {
+      console.log('[Home] Creating basic lesson object');
+      // Create a basic lesson object if not found in sample data
+      setSelectedLesson({
+        title: lessonTitle,
+        description: "Xem tài liệu học tập bên dưới",
+        pdfUrl: lessonUrl, // Add PDF URL for viewer
+        resources: [
+          {
+            type: 'Article',
+            title: lessonTitle,
+            url: lessonUrl
+          }
+        ]
+      });
+    }
+    
+    setIsLessonDrawerOpen(true);
+  };
+
+  // Custom markdown component that tracks lesson context
+  const MarkdownWithLessonLinks = ({ content }) => {
+    const [currentLessonTitle, setCurrentLessonTitle] = useState('');
+
+    return (
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ node, children, href, ...props }) => {
+            // Check if this is a lesson link
+            const isLessonLink = children && children.toString().includes('Xem bài học');
+            
+            if (isLessonLink && href) {
+              return (
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleLessonClick(currentLessonTitle || "Bài học", href);
+                  }}
+                  style={{ color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer' }}
+                  {...props}
+                >
+                  {children}
+                </a>
+              );
+            }
+            
+            // Regular external link
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                {children}
+              </a>
+            );
+          },
+          strong: ({ node, children, ...props }) => {
+            // Check if this strong tag contains a lesson title
+            const text = children && children.toString();
+            if (text && text.match(/^Bài \d+\./)) {
+              // Extract lesson title and store it
+              const title = text.replace(/^Bài \d+\.\s*/, '');
+              setCurrentLessonTitle(title);
+            }
+            return <strong {...props}>{children}</strong>;
+          },
+          p: ({ node, children, ...props }) => {
+            // Reset current lesson title for new paragraphs that don't start with "Bài"
+            const text = children && children.toString();
+            if (text && !text.match(/^Bài \d+\./)) {
+              // Only reset if we're moving to a new section
+              if (!text.includes('🔗') && !text.includes('⏱️')) {
+                setTimeout(() => setCurrentLessonTitle(''), 0);
+              }
+            }
+            return <p {...props}>{children}</p>;
+          }
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    );
   };
 
   // Handle creating a new chat session
@@ -670,9 +770,7 @@ function Home() {
                             style={{ whiteSpace: "pre-line", fontSize: "14px", lineHeight: "1.5" }}
                           >
                             {message.type !== "user" ? (
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {message.content}
-                              </ReactMarkdown>
+                              <MarkdownWithLessonLinks content={message.content} />
                             ) : (
                               message.content
                             )}
@@ -756,6 +854,13 @@ function Home() {
           </div>
         </div>
       </div>
+
+      {/* Lesson Drawer */}
+      <ChatLessonDrawer
+        isOpen={isLessonDrawerOpen}
+        onClose={() => setIsLessonDrawerOpen(false)}
+        lesson={selectedLesson}
+      />
     </>
   );
 }

@@ -63,4 +63,15 @@
     color: #007bff;
     font-weight: bold;
   }
+
+  /* Avatar dropdown without arrow */
+  .avatar-dropdown-toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .avatar-dropdown-toggle::after {
+    display: none !important;
+  }
   

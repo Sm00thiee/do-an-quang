@@ -1,0 +1,347 @@
+/* Lesson Detail Drawer Styles - Matching Figma Design (8389-8377) */
+
+/* Overlay */
+.lesson-drawer-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Drawer Container */
+.lesson-drawer-container {
+    width: 810px;
+    max-width: 100vw;
+    height: 100vh;
+    background-color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease-out;
+    overflow: hidden;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+/* Header */
+.lesson-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    gap: 10px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.download-pdf-btn {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    background-color: transparent;
+    border: 1px solid #3B82F6;
+    border-radius: 8px;
+    color: #3B82F6;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.download-pdf-btn:hover {
+    background-color: #EFF6FF;
+}
+
+.drawer-close-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.drawer-close-btn:hover {
+    background-color: #F3F4F6;
+}
+
+/* Scrollable Content */
+.lesson-drawer-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 24px 40px 24px;
+}
+
+/* Title Section */
+.lesson-title-section {
+    padding: 16px 0;
+}
+
+.lesson-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 36px;
+    color: #1F2937;
+    margin: 0;
+}
+
+/* Introduction Section */
+.lesson-intro-section {
+    padding-bottom: 16px;
+}
+
+.lesson-intro {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #374151;
+    margin: 0;
+}
+
+/* Content Section */
+.lesson-content-section {
+    padding-bottom: 16px;
+}
+
+.section-heading {
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    color: #1F2937;
+    margin: 0 0 16px 0;
+}
+
+.section-description {
+    margin-bottom: 16px;
+}
+
+.section-description p {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #374151;
+    margin: 0 0 8px 0;
+}
+
+.section-items-list {
+    list-style: disc;
+    padding-left: 24px;
+    margin: 0;
+}
+
+.section-item {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.section-item strong {
+    font-weight: 500;
+}
+
+/* Video Section */
+.lesson-video-section {
+    padding: 24px 0;
+}
+
+.video-wrapper {
+    width: 100%;
+    height: 420px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.video-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Resources Divider */
+.resources-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background-color: #9CA3AF;
+}
+
+.divider-line:first-child {
+    width: 32px;
+    flex: 0;
+}
+
+.divider-chip {
+    padding: 4px 12px;
+    background-color: #FFFFFF;
+    border: 1px solid #9CA3AF;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+.divider-chip span {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    color: #1F2937;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.divider-chip span::before {
+    content: '❤️';
+    font-size: 16px;
+}
+
+/* Resources Section */
+.resources-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: opacity 0.2s ease;
+}
+
+.resource-item:hover {
+    opacity: 0.8;
+}
+
+.resource-chip {
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    white-space: nowrap;
+}
+
+.chip-article {
+    background-color: #E0F2FE;
+    color: #0369A1;
+}
+
+.chip-course {
+    background-color: #FFEDD5;
+    color: #C2410C;
+}
+
+.chip-official {
+    background-color: #FFE4E6;
+    color: #BE123C;
+}
+
+.chip-default {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+.resource-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 16px;
+    color: #374151;
+    text-decoration: underline;
+    text-underline-position: from-font;
+}
+
+/* Scrollbar Styling */
+.lesson-drawer-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lesson-drawer-content::-webkit-scrollbar-track {
+    background: #F9FAFB;
+}
+
+.lesson-drawer-content::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+.lesson-drawer-content::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .lesson-drawer-container {
+        width: 100vw;
+    }
+}
+
+@media (max-width: 768px) {
+    .lesson-drawer-header {
+        padding: 16px;
+    }
+
+    .lesson-drawer-content {
+        padding: 0 16px 24px 16px;
+    }
+
+    .lesson-title {
+        font-size: 20px;
+        line-height: 28px;
+    }
+
+    .section-heading {
+        font-size: 18px;
+    }
+
+    .video-wrapper {
+        height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .download-pdf-btn {
+        font-size: 14px;
+    }
+
+    .video-wrapper {
+        height: 220px;
+    }
+}

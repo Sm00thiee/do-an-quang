@@ -3,11 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./layout.css";
-import { Navbar, Nav, Container, Row, Col } from "react-bootstrap";
+import { Navbar, Nav, Container, Dropdown } from "react-bootstrap";
 import { AppContext } from "../../../App";
 import clsx from "clsx";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import { useCandidateAuthStore } from "../../../stores/candidateAuthStore";
+import { BsPersonCircle } from "react-icons/bs";
 
 function Layout(props) {
   const { t } = useTranslation();
@@ -58,19 +59,84 @@ function Layout(props) {
                 </div>
               ) : (
                 <div className="d-flex flex-lg-row flex-column align-items-lg-center gap-3">
-                  {/* Logout Button */}
-                  <button
-                    type="button"
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={handleLogout}
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    {t('logout')}
-                  </button>
+                  {/* Avatar Menu Dropdown */}
+                  <Dropdown align="end">
+                    <Dropdown.Toggle 
+                      variant="link" 
+                      id="avatar-dropdown" 
+                      className="p-0 border-0 text-decoration-none"
+                      style={{ boxShadow: 'none' }}
+                      bsPrefix="avatar-dropdown-toggle"
+                    >
+                      <div className="d-flex align-items-center gap-2">
+                        {candidate?.image ? (
+                          <img 
+                            src={candidate.image} 
+                            alt="Avatar" 
+                            className="rounded-circle"
+                            style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <BsPersonCircle size={32} className="text-secondary" />
+                        )}
+                        <span className="text-secondary d-none d-lg-inline fw-500">
+                          {candidate?.fname || 'User'}
+                        </span>
+                      </div>
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu
+                      className="shadow border"
+                      style={{
+                        borderRadius: '8px',
+                        padding: '8px',
+                        minWidth: '200px',
+                        marginTop: '8px'
+                      }}
+                    >
+                      <Dropdown.Item
+                        as={Link}
+                        to="/candidate/applied-jobs"
+                        className="py-2 px-3 rounded"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          color: '#3d3d3d',
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        Việc làm đã ứng tuyển
+                      </Dropdown.Item>
+                      
+                      <Dropdown.Item
+                        as={Link}
+                        to="/candidate/saved-jobs"
+                        className="py-2 px-3 rounded"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          color: '#3d3d3d',
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        Việc đã lưu
+                      </Dropdown.Item>
+                      
+                      <Dropdown.Item
+                        onClick={handleLogout}
+                        className="py-2 px-3 rounded"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          color: '#e11d48',
+                          backgroundColor: '#e5e7eb',
+                          transition: 'background-color 0.2s'
+                        }}
+                      >
+                        Đăng xuất
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </div>
               )}
             </div>
@@ -80,42 +146,6 @@ function Layout(props) {
       <main className='page-body' style={{ marginTop: "57px" }}>
         {props.children}
       </main>
-      <footer className="border-top bg-white pt-5 pb-3">
-        <Container>
-          <Row className="gy-4">
-            <Col md={4} className="ps-md-4">
-              <h5 className="mb-3 text-secondary">{t('contactInfo')}</h5>
-              <div className="text-secondary d-flex flex-column gap-2">
-                <p className="mb-0">{t('contactEmail')}</p>
-                <p className="mb-0">{t('contactPhone')}</p>
-                <p className="mb-0">{t('contactAddress')}</p>
-              </div>
-            </Col>
-            <Col md={4} className="ps-md-5">
-              <h5 className="mb-3 text-secondary">{t('categories')}</h5>
-              <ul className="list-unstyled d-flex flex-column gap-2">
-                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('itJobs')}</Link></li>
-                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('accountingJobs')}</Link></li>
-                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('businessJobs')}</Link></li>
-                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('marketingJobs')}</Link></li>
-              </ul>
-            </Col>
-            <Col md={4} className="ps-md-5">
-              <h5 className="mb-3 text-secondary">{t('links')}</h5>
-              <ul className="list-unstyled d-flex flex-column gap-2">
-                <li><Link to="/" className="text-secondary text-decoration-none hover-text-main">{t('home')}</Link></li>
-                <li><Link to="/jobs" className="text-secondary text-decoration-none hover-text-main">{t('jobs')}</Link></li>
-                <li><Link to="/companies" className="text-secondary text-decoration-none hover-text-main">{t('companies')}</Link></li>
-                <li><Link to="#" className="text-secondary text-decoration-none hover-text-main">{t('blog')}</Link></li>
-              </ul>
-            </Col>
-          </Row>
-          <hr className="my-4 text-secondary" />
-          <div className="text-center text-muted">
-            {t('allRightsReserved')}
-          </div>
-        </Container>
-      </footer>
     </>
   );
 }

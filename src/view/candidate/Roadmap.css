@@ -585,6 +585,16 @@
   color: #4a5568;
 }
 
+.resource-item.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resource-item.clickable:hover {
+  background: #e2e8f0;
+  transform: translateX(4px);
+}
+
 .skill-bullet {
   color: #48bb78;
   font-weight: 700;

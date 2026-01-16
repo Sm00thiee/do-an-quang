@@ -1,104 +1,20 @@
 import { useContext, useEffect, useState } from "react";
-import { BsSearch, BsBookmark, BsBookmarkFill, BsGeoAlt, BsClock, BsCurrencyDollar } from "react-icons/bs";
-import { useNavigate } from "react-router-dom";
+import {
+  BsSearch,
+  BsBookmark, BsBookmarkFill,
+  BsGeoAlt,
+  BsClock,
+  BsCurrencyDollar
+} from "react-icons/bs";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppContext } from "../../App";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import jobApi from "../../api/job";
 import "./JobList.css";
 
-// Mock job data
-const MOCK_JOBS = [
-  {
-    id: 1,
-    title: "Senior Frontend Developer",
-    company: "TechCorp Vietnam",
-    location: "Hà Nội",
-    salary: "20-30 triệu",
-    type: "Full-time",
-    experience: "3-5 năm",
-    postedTime: "2 ngày trước",
-    isHot: true,
-    tags: ["React", "TypeScript", "Node.js"],
-  },
-  {
-    id: 2,
-    title: "UI/UX Designer",
-    company: "Design Studio",
-    location: "Hồ Chí Minh",
-    salary: "15-25 triệu",
-    type: "Remote",
-    experience: "2-3 năm",
-    postedTime: "1 ngày trước",
-    tags: ["Figma", "Adobe XD", "Sketch"],
-  },
-  {
-    id: 3,
-    title: "Product Manager",
-    company: "Startup Hub",
-    location: "Đà Nẵng",
-    salary: "25-35 triệu",
-    type: "Full-time",
-    experience: "4-6 năm",
-    postedTime: "3 ngày trước",
-    isNew: true,
-    tags: ["Agile", "Product Strategy", "Analytics"],
-  },
-  {
-    id: 4,
-    title: "Data Analyst",
-    company: "Analytics Co",
-    location: "Hà Nội",
-    salary: "18-28 triệu",
-    type: "Full-time",
-    experience: "2-4 năm",
-    postedTime: "1 ngày trước",
-    tags: ["SQL", "Python", "Power BI"],
-  },
-  {
-    id: 5,
-    title: "Backend Developer (Java)",
-    company: "Enterprise Solutions",
-    location: "Hồ Chí Minh",
-    salary: "22-32 triệu",
-    type: "Full-time",
-    experience: "3-5 năm",
-    postedTime: "2 ngày trước",
-    tags: ["Java", "Spring Boot", "MySQL"],
-  },
-  {
-    id: 6,
-    title: "Marketing Manager",
-    company: "Digital Agency",
-    location: "Hà Nội",
-    salary: "20-30 triệu",
-    type: "Full-time",
-    experience: "3-5 năm",
-    postedTime: "4 ngày trước",
-    isHot: true,
-    tags: ["Digital Marketing", "SEO", "Content"],
-  },
-  {
-    id: 7,
-    title: "Mobile Developer (Flutter)",
-    company: "Mobile First",
-    location: "Remote",
-    salary: "19-29 triệu",
-    type: "Remote",
-    experience: "2-4 năm",
-    postedTime: "1 ngày trước",
-    tags: ["Flutter", "Dart", "Firebase"],
-  },
-  {
-    id: 8,
-    title: "DevOps Engineer",
-    company: "Cloud Systems",
-    location: "Hồ Chí Minh",
-    salary: "25-35 triệu",
-    type: "Full-time",
-    experience: "4-6 năm",
-    postedTime: "2 ngày trước",
-    tags: ["AWS", "Docker", "Kubernetes"],
-  },
-];
+dayjs.extend(relativeTime);
 
 // Categories for filtering
 const CATEGORIES = [
@@ -113,15 +29,18 @@ const CATEGORIES = [
 function JobList() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { setCurrentPage } = useContext(AppContext);
 
-  const [jobs, setJobs] = useState(MOCK_JOBS);
-  const [filteredJobs, setFilteredJobs] = useState(MOCK_JOBS);
+  const [jobs, setJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState(new Set());
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Filter states
   const [salaryRange, setSalaryRange] = useState([0, 50]);
@@ -132,43 +51,80 @@ function JobList() {
     setCurrentPage("jobs");
   }, [setCurrentPage]);
 
+  // Read initial keyword from query string and trigger first search
   useEffect(() => {
-    handleFilter();
-  }, [searchKeyword, selectedLocation, selectedCategory, salaryRange, experienceFilter, jobTypeFilter]);
+    const params = new URLSearchParams(location.search);
+    const keyword = params.get("keyword") || "";
+    setSearchKeyword(keyword);
 
-  const handleFilter = () => {
+    const payload = {};
+    if (keyword.trim()) {
+      payload.keyword = keyword.trim();
+    }
+
+    fetchJobs(payload);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  // Apply client-side filters (location, experience, job type) on top of API results
+  useEffect(() => {
     let filtered = jobs;
 
-    // Search keyword
-    if (searchKeyword.trim()) {
-      filtered = filtered.filter(
-        (job) =>
-          job.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-          job.company.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-          job.tags.some((tag) =>
-            tag.toLowerCase().includes(searchKeyword.toLowerCase())
-          )
-      );
-    }
-
-    // Location filter
+    // Location filter (by name or address)
     if (selectedLocation && selectedLocation !== "all") {
-      filtered = filtered.filter((job) => job.location === selectedLocation);
+      filtered = filtered.filter((job) => {
+        const jobLocation = job.location || job.address || "";
+        return jobLocation === selectedLocation;
+      });
     }
 
-    // Experience filter
+    // Experience filter (fallback to simple text matching)
     if (experienceFilter.length > 0) {
-      filtered = filtered.filter((job) =>
-        experienceFilter.some((exp) => job.experience.includes(exp))
-      );
+      filtered = filtered.filter((job) => {
+        const experienceText = job.experience || (job.yoe ? `${job.yoe}` : "");
+        return experienceFilter.some((exp) =>
+          String(experienceText).includes(exp)
+        );
+      });
     }
 
     // Job type filter
     if (jobTypeFilter.length > 0) {
-      filtered = filtered.filter((job) => jobTypeFilter.includes(job.type));
+      filtered = filtered.filter((job) => {
+        const type =
+          job.type ||
+          job.jtype?.name ||
+          "";
+        return jobTypeFilter.includes(type);
+      });
     }
 
     setFilteredJobs(filtered);
+  }, [jobs, selectedLocation, experienceFilter, jobTypeFilter]);
+
+  const fetchJobs = async (payload = {}) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Only send known fields to backend; start with keyword for now
+      const filterPayload = {};
+      if (payload.keyword && payload.keyword.trim()) {
+        filterPayload.keyword = payload.keyword.trim();
+      }
+
+      const res = await jobApi.filter(filterPayload);
+      const data = Array.isArray(res) ? res : res?.data || [];
+      setJobs(data);
+      setFilteredJobs(data);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+      setError(err.message || "Không thể tải danh sách việc làm");
+      setJobs([]);
+      setFilteredJobs([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleSaveJob = (jobId) => {
@@ -185,7 +141,17 @@ function JobList() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    handleFilter();
+
+    const keyword = searchKeyword.trim();
+
+    // Update URL query and trigger API search
+    const params = new URLSearchParams();
+    if (keyword) {
+      params.set("keyword", keyword);
+    }
+    navigate(`/jobs?${params.toString()}`, { replace: false });
+
+    fetchJobs({ keyword });
   };
 
   const toggleExperienceFilter = (exp) => {
@@ -365,83 +331,133 @@ function JobList() {
             </div>
 
             {/* Job Cards Grid */}
-            <div className="jobs-grid">
-              {filteredJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="job-card"
-                  onClick={() => navigate(`/jobs/${job.id}`)}
-                >
-                  {/* Badges */}
-                  <div className="job-badges">
-                    {job.isHot && <span className="badge badge-hot">🔥 Hot</span>}
-                    {job.isNew && <span className="badge badge-new">✨ New</span>}
-                  </div>
-
-                  {/* Company Logo */}
-                  <div className="company-logo">
-                    <div className="logo-placeholder">
-                      {job.company.charAt(0)}
-                    </div>
-                  </div>
-
-                  {/* Job Info */}
-                  <h3 className="job-title">{job.title}</h3>
-                  <p className="job-company">{job.company}</p>
-
-                  {/* Job Meta */}
-                  <div className="job-meta">
-                    <div className="meta-item">
-                      <BsGeoAlt />
-                      <span>{job.location}</span>
-                    </div>
-                    <div className="meta-item">
-                      <BsCurrencyDollar />
-                      <span>{job.salary}</span>
-                    </div>
-                    <div className="meta-item">
-                      <BsClock />
-                      <span>{job.postedTime}</span>
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="job-tags">
-                    {job.tags.slice(0, 3).map((tag, idx) => (
-                      <span key={idx} className="tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="job-card-footer">
-                    <span className="job-type-badge">{job.type}</span>
-                    <button
-                      className="save-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSaveJob(job.id);
-                      }}
-                    >
-                      {savedJobs.has(job.id) ? (
-                        <BsBookmarkFill className="saved" />
-                      ) : (
-                        <BsBookmark />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* No Results */}
-            {filteredJobs.length === 0 && (
+            {isLoading ? (
               <div className="no-results">
-                <div className="no-results-icon">🔍</div>
-                <h3>{t('noJobsFound')}</h3>
-                <p>{t('tryChangeKeywords')}</p>
+                <div className="no-results-icon">⏳</div>
+                <h3>{t('loading') || 'Đang tải việc làm...'}</h3>
               </div>
+            ) : error ? (
+              <div className="no-results">
+                <div className="no-results-icon">⚠️</div>
+                <h3>{t('error') || 'Đã xảy ra lỗi'}</h3>
+                <p>{error}</p>
+              </div>
+            ) : (
+              <>
+                <div className="jobs-grid">
+                  {filteredJobs.map((job) => {
+                    const title = job.title || job.jname || "";
+                    const company =
+                      job.company ||
+                      job.employer?.name ||
+                      "";
+                    const locationText =
+                      job.location ||
+                      job.address ||
+                      "";
+                    const salaryText =
+                      job.salary ||
+                      (job.min_salary && job.max_salary
+                        ? `${job.min_salary} - ${job.max_salary} triệu`
+                        : t('competitive') || "Cạnh tranh");
+                    const postedTime =
+                      job.postedTime ||
+                      (job.created_at
+                        ? `Đăng ${dayjs(job.created_at).fromNow()}`
+                        : "");
+                    const jobTags =
+                      job.tags ||
+                      (job.industries
+                        ? job.industries.map((ind) => ind.name)
+                        : []);
+                    const jobType =
+                      job.type ||
+                      job.jtype?.name ||
+                      "";
+
+                    return (
+                      <div
+                        key={job.id}
+                        className="job-card"
+                        onClick={() => navigate(`/jobs/${job.id}`)}
+                      >
+                        {/* Badges */}
+                        <div className="job-badges">
+                          {job.isHot && (
+                            <span className="badge badge-hot">🔥 Hot</span>
+                          )}
+                          {job.isNew && (
+                            <span className="badge badge-new">✨ New</span>
+                          )}
+                        </div>
+
+                        {/* Company Logo */}
+                        <div className="company-logo">
+                          <div className="logo-placeholder">
+                            {company ? company.charAt(0) : "?"}
+                          </div>
+                        </div>
+
+                        {/* Job Info */}
+                        <h3 className="job-title">{title}</h3>
+                        <p className="job-company">{company}</p>
+
+                        {/* Job Meta */}
+                        <div className="job-meta">
+                          <div className="meta-item">
+                            <BsGeoAlt />
+                            <span>{locationText}</span>
+                          </div>
+                          <div className="meta-item">
+                            <BsCurrencyDollar />
+                            <span>{salaryText}</span>
+                          </div>
+                          <div className="meta-item">
+                            <BsClock />
+                            <span>{postedTime}</span>
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="job-tags">
+                          {jobTags.slice(0, 3).map((tag, idx) => (
+                            <span key={idx} className="tag">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="job-card-footer">
+                          <span className="job-type-badge">{jobType}</span>
+                          <button
+                            className="save-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSaveJob(job.id);
+                            }}
+                          >
+                            {savedJobs.has(job.id) ? (
+                              <BsBookmarkFill className="saved" />
+                            ) : (
+                              <BsBookmark />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* No Results */}
+                {filteredJobs.length === 0 && (
+                  <div className="no-results">
+                    <div className="no-results-icon">🔍</div>
+                    <h3>{t('noJobsFound')}</h3>
+                    <p>{t('tryChangeKeywords')}</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

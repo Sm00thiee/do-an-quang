@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     BsEye,
-    BsTrash
+    BsTrash,
+    BsEnvelope,
+    BsDownload,
+    BsCheckSquare
 } from 'react-icons/bs';
+import CandidateFilter from './CandidateFilter';
 import './CandidateManagement.css';
 
 function CandidateManagement() {
@@ -11,6 +15,9 @@ function CandidateManagement() {
     const [loading] = useState(false);
     const [page, setPage] = useState(0);
     const itemsPerPage = 10;
+    const [selectedCandidates, setSelectedCandidates] = useState([]);
+    const [showBulkActions, setShowBulkActions] = useState(false);
+    const [filters, setFilters] = useState({});
 
     // Extended mock data - 25 candidates for realistic pagination
     const allCandidates = [
@@ -41,14 +48,45 @@ function CandidateManagement() {
         { id: 25, name: 'Huỳnh Thị Ngọc', email: 'huynhngoc@example.com', phone: '0923456781', position: 'Social Media Manager', status: 'approved', appliedDate: '2026-12-22' }
     ];
 
+    // Filter candidates
+    const filterCandidates = (candidates) => {
+        return candidates.filter(candidate => {
+            if (filters.skills && filters.skills.length > 0) {
+                // Mock: assume candidates have skills property
+                return true; // Would check if candidate has any of the selected skills
+            }
+            if (filters.experienceLevel && filters.experienceLevel.length > 0) {
+                return true; // Would check candidate's experience level
+            }
+            if (filters.locations && filters.locations.length > 0) {
+                return true; // Would check candidate's location
+            }
+            if (filters.salaryRange && filters.salaryRange.length > 0) {
+                return true; // Would check candidate's salary expectation
+            }
+            if (filters.applicationDateFrom) {
+                const candidateDate = new Date(candidate.appliedDate);
+                const fromDate = new Date(filters.applicationDateFrom);
+                if (candidateDate < fromDate) return false;
+            }
+            if (filters.applicationDateTo) {
+                const candidateDate = new Date(candidate.appliedDate);
+                const toDate = new Date(filters.applicationDateTo);
+                if (candidateDate > toDate) return false;
+            }
+            return true;
+        });
+    };
+
     // Calculate pagination
-    const totalPages = Math.ceil(allCandidates.length / itemsPerPage);
+    const filteredCandidates = filterCandidates(allCandidates);
+    const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
     const startIndex = page * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const candidates = allCandidates.slice(startIndex, endIndex);
+    const candidates = filteredCandidates.slice(startIndex, endIndex);
 
     const handleViewDetail = (candidateId) => {
-        console.log('View candidate:', candidateId);
+        navigate(`/employer/candidates/${candidateId}`);
     };
 
     const handleDelete = (candidateId) => {
@@ -56,6 +94,70 @@ function CandidateManagement() {
             console.log('Delete candidate:', candidateId);
             alert('Xóa hồ sơ thành công (Mock)');
         }
+    };
+
+    const handleSelectCandidate = (candidateId) => {
+        if (selectedCandidates.includes(candidateId)) {
+            setSelectedCandidates(selectedCandidates.filter(id => id !== candidateId));
+        } else {
+            setSelectedCandidates([...selectedCandidates, candidateId]);
+        }
+    };
+
+    const handleSelectAll = () => {
+        if (selectedCandidates.length === candidates.length) {
+            setSelectedCandidates([]);
+        } else {
+            setSelectedCandidates(candidates.map(c => c.id));
+        }
+    };
+
+    const handleBulkStatusUpdate = (newStatus) => {
+        if (selectedCandidates.length === 0) {
+            alert('Vui lòng chọn ít nhất một ứng viên');
+            return;
+        }
+        console.log('Bulk update status:', newStatus, selectedCandidates);
+        alert(`Cập nhật trạng thái cho ${selectedCandidates.length} ứng viên thành công (Mock)`);
+        setSelectedCandidates([]);
+        setShowBulkActions(false);
+    };
+
+    const handleBulkEmail = () => {
+        if (selectedCandidates.length === 0) {
+            alert('Vui lòng chọn ít nhất một ứng viên');
+            return;
+        }
+        console.log('Send bulk email to:', selectedCandidates);
+        alert(`Gửi email cho ${selectedCandidates.length} ứng viên (Mock)`);
+    };
+
+    const handleBulkExport = () => {
+        if (selectedCandidates.length === 0) {
+            alert('Vui lòng chọn ít nhất một ứng viên');
+            return;
+        }
+        console.log('Export candidates:', selectedCandidates);
+        // Mock CSV export
+        const csvContent = "Họ tên,Email,Số điện thoại,Vị trí,Trạng thái,Ngày ứng tuyển\n";
+        const selectedData = candidates.filter(c => selectedCandidates.includes(c.id));
+        const csvRows = selectedData.map(c => 
+            `${c.name},${c.email},${c.phone},${c.position},${c.status},${c.appliedDate}`
+        ).join('\n');
+        
+        const blob = new Blob([csvContent + csvRows], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `candidates_${new Date().getTime()}.csv`;
+        a.click();
+        
+        alert(`Xuất ${selectedCandidates.length} ứng viên thành công`);
+    };
+
+    const handleFilterChange = (newFilters) => {
+        setFilters(newFilters);
+        setPage(0); // Reset to first page when filtering
     };
 
     const getStatusBadge = (status) => {
@@ -79,8 +181,56 @@ function CandidateManagement() {
             <div className="candidate-header">
                 <div>
                     <h1 className="candidate-title">Quản lý hồ sơ ứng viên</h1>
+                    <p className="candidate-subtitle">
+                        Tổng số: {filteredCandidates.length} ứng viên
+                    </p>
                 </div>
             </div>
+
+            <CandidateFilter onFilterChange={handleFilterChange} />
+
+            {selectedCandidates.length > 0 && (
+                <div className="bulk-actions-bar">
+                    <div className="bulk-actions-info">
+                        <BsCheckSquare />
+                        <span>Đã chọn {selectedCandidates.length} ứng viên</span>
+                    </div>
+                    <div className="bulk-actions-buttons">
+                        <button 
+                            className="bulk-action-btn"
+                            onClick={() => setShowBulkActions(!showBulkActions)}
+                        >
+                            Cập nhật trạng thái
+                        </button>
+                        <button 
+                            className="bulk-action-btn"
+                            onClick={handleBulkEmail}
+                        >
+                            <BsEnvelope /> Gửi email
+                        </button>
+                        <button 
+                            className="bulk-action-btn"
+                            onClick={handleBulkExport}
+                        >
+                            <BsDownload /> Xuất file
+                        </button>
+                    </div>
+
+                    {showBulkActions && (
+                        <div className="bulk-status-dropdown">
+                            <button onClick={() => handleBulkStatusUpdate('approved')}>
+                                Đã duyệt
+                            </button>
+                            <button onClick={() => handleBulkStatusUpdate('rejected')}>
+                                Từ chối
+                            </button>
+                            <button onClick={() => handleBulkStatusUpdate('new')}>
+                                Mới
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="candidates-table-container">
                 {loading ? (
@@ -102,7 +252,14 @@ function CandidateManagement() {
                             </thead>
                             <tbody>
                                 {candidates.map((candidate) => (
-                                    <tr key={candidate.id}>
+                                    <tr key={candidate.id} className={selectedCandidates.includes(candidate.id) ? 'selected-row' : ''}>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCandidates.includes(candidate.id)}
+                                                onChange={() => handleSelectCandidate(candidate.id)}
+                                            />
+                                        </td>
                                         <td>
                                             <div
                                                 className="candidate-name-cell"
