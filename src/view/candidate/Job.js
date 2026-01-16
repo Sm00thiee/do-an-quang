@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { BsBookmark, BsBookmarkFill, BsShare, BsClock, BsGeoAlt, BsCurrencyDollar, BsBriefcase, BsPeople } from "react-icons/bs";
 import { BiBuildings } from "react-icons/bi";
-import jobApi from "../../api/job";
-import candidateApi from "../../api/candidate";
+import jobService from "../../services/jobService";
 import { useCandidateAuthStore } from "../../stores/candidateAuthStore";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -29,18 +28,31 @@ function Job() {
   const [uploadMethod, setUploadMethod] = useState(""); // "upload" or "create"
 
   const getJobInf = async () => {
-    const res = await jobApi.getById(id);
-    setJob(res);
+    try {
+      const res = await jobService.getJobById(id);
+      setJob(res);
+    } catch (error) {
+      console.error('Error fetching job:', error);
+      alert('Không thể tải thông tin công việc. Vui lòng thử lại sau.');
+    }
   };
 
   const checkApplying = async () => {
-    const res = await jobApi.checkApplying(id);
-    setIsApplied(res.value);
+    try {
+      const res = await jobService.checkApplying(id, user.id);
+      setIsApplied(res.value);
+    } catch (error) {
+      console.error('Error checking application:', error);
+    }
   };
 
   const checkJobSaved = async () => {
-    const res = await candidateApi.checkJobSaved(id);
-    setIsSaved(res.value);
+    try {
+      const res = await jobService.checkJobSaved(id, user.id);
+      setIsSaved(res.value);
+    } catch (error) {
+      console.error('Error checking saved job:', error);
+    }
   };
 
   const handleApply = async () => {
@@ -49,16 +61,25 @@ function Job() {
       return;
     }
 
-    if (uploadMethod === "upload") {
-      const formData = new FormData();
-      formData.append("cv", file);
-      formData.append("fname", file.name);
-      await jobApi.apply(id, formData);
-    }
+    try {
+      if (uploadMethod === "upload") {
+        // TODO: Implement file upload to Supabase storage
+        // For now, just record the application
+        await jobService.applyToJob(id, user.id, {
+          cv_url: null, // Will be implemented with file upload
+          cover_letter: null,
+        });
+      } else {
+        await jobService.applyToJob(id, user.id);
+      }
 
-    alert("Ứng tuyển thành công!");
-    setShowApplyModal(false);
-    window.location.reload();
+      alert("Ứng tuyển thành công!");
+      setShowApplyModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      alert('Có lỗi xảy ra khi ứng tuyển. Vui lòng thử lại sau.');
+    }
   };
 
   const toggleSaveJob = async () => {
@@ -66,9 +87,13 @@ function Job() {
       alert("Vui lòng đăng nhập!");
       return;
     }
-    const data = { status: !isSaved };
-    await candidateApi.processJobSaving(id, data);
-    setIsSaved(!isSaved);
+    try {
+      await jobService.processJobSaving(id, user.id, !isSaved);
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error('Error saving job:', error);
+      alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+    }
   };
 
   const handleApplyClick = () => {
@@ -335,7 +360,7 @@ function Job() {
                 <input
                   type="text"
                   className="form-input"
-                  value={user ? `${user.name.lastname} ${user.name.firstname}` : ""}
+                  value={user ? `${user.name?.lastname || ''} ${user.name?.firstname || ''}`.trim() || user.email || '' : ""}
                   disabled
                 />
               </div>

@@ -1,84 +1,10 @@
-# TODO - Danh sách tính năng cần phát triển
-
-## 1. AI tư vấn & tạo lộ trình
-**Trạng thái:** Đã làm – cần sửa  
-**Mô tả hiện tại:** Click bài học mở link Drive PDF  
-**Cần làm / Chỉnh sửa:**
-- Mở page/drawer chi tiết bài học
-- Nội dung dạng text
-- Nhúng video YouTube hoặc có Link Youtube liên quan đến bài học (thêm data mẫu)
-- Có nút Download PDF (Download PDF tất cả bài học có trong lộ trình, nén thành .zip)
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8389-8377&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 2. Tìm kiếm việc làm
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** Chưa có base dữ liệu  
-**Cần làm / Chỉnh sửa:**
-- Tạo base job
-- Logic search
-- Trang kết quả tìm kiếm
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8057-48598&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 3. Xem chi tiết việc làm
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** Chưa có trang chi tiết  
-**Cần làm / Chỉnh sửa:**
-- Tạo page Job Detail
-- Mô tả, yêu cầu, quyền lợi, etc.
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8037-29174&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 4. Ứng tuyển việc làm
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** Chưa có  
-**Cần làm / Chỉnh sửa:**
-- Upload CV (PDF)
-- Submit ứng tuyển
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8057-51894&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 5. Việc đã ứng tuyển
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** Chưa có danh sách  
-**Cần làm / Chỉnh sửa:**
-- Hiển thị danh sách job đã apply
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8351-8811&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 6. Việc đã lưu
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** Chưa có danh sách  
-**Cần làm / Chỉnh sửa:**
-- Hiển thị danh sách job đã save
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8349-18547&t=Psf8cg6NL7ByceWq-4
-
----
-
-## 7. Menu Avatar
-**Trạng thái:** Chưa làm  
-**Mô tả hiện tại:** -  
-**Cần làm / Chỉnh sửa:**
-- Việc đã ứng tuyển
-- Việc đã lưu
-- Đăng xuất
-
-**Link Figma UI:** https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8587-4020&t=Psf8cg6NL7ByceWq-4
-
----
-
-## Tóm tắt trạng thái
-- ✅ Đã làm – cần sửa: 1 tính năng
-- ⏳ Chưa làm: 6 tính năng
+| ID | Tính năng | Trạng thái | Hiện trạng | Ghi chú | Link Figma |
+|----|----------|------------|------------|---------|------------|
+| 1 | AI tư vấn & tạo lộ trình | Đã làm – cần sửa | Click bài học mở link Drive PDF | - Mở page/drawer chi tiết bài học<br>- Nội dung dạng text<br>- Nhúng video YouTube hoặc có link YouTube liên quan đến bài học<br>- Có nút Download PDF | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8389-8377&t=Psf8cg6NL7ByceWq-4 |
+| 2 | Tìm kiếm việc làm | ✅ Đã hoàn thành | Đã tạo database schema, API, UI theo Figma | - ✅ Đã tạo base job schema (industries, locations, companies, jobs, applications, saved_jobs)<br>- ✅ Logic search với filters (location, salary, experience)<br>- ✅ Trang kết quả tìm kiếm theo Figma design<br>- ✅ Job cards với company logo, salary, location<br>- ✅ Save job functionality<br>- ✅ Match score display (90%)<br>- ✅ Pagination<br>- ✅ Featured companies section<br>- ⚠️ Cần chạy migration trên Supabase Dashboard | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8057-48598&t=Psf8cg6NL7ByceWq-4 |
+| 3 | Xem chi tiết việc làm | Chưa làm | Chưa có trang chi tiết | - Tạo page Job Detail<br>- Mô tả, yêu cầu, quyền lợi,.. | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8037-29174&t=Psf8cg6NL7ByceWq-4 |
+| 4 | Ứng tuyển việc làm | Chưa làm | Chưa có | - Upload CV (PDF)<br>- Submit ứng tuyển | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8057-51894&t=Psf8cg6NL7ByceWq-4 |
+| 5 | Việc đã ứng tuyển | Chưa làm | Chưa có danh sách | - Hiển thị danh sách job đã apply | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8351-8811&t=Psf8cg6NL7ByceWq-4 |
+| 6 | Việc đã lưu | Chưa làm | Chưa có danh sách | - Hiển thị danh sách job đã save | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8349-18547&t=Psf8cg6NL7ByceWq-4 |
+| 7 | Menu Avatar | Chưa làm | Chưa có | - Việc đã ứng tuyển<br>- Việc đã lưu<br>- Đăng xuất | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8587-4020&t=Psf8cg6NL7ByceWq-4 |
+| 8 | Xem thông tin công ty | Chưa làm | Chưa có trang công ty | - Trang thông tin doanh nghiệp<br>- Logo, mô tả, việc đang tuyển | https://www.figma.com/design/ybuCf8EN04CzBMJWkRXhbw/-Camap----Design-System?node-id=8351-10756&t=CN3Z0FxFiIS75ZT6-4 |
