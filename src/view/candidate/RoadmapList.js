@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    BsChevronDown,
-    BsChevronUp,
     BsPlus,
     BsArrowRight,
     BsBook,
@@ -58,7 +56,6 @@ const getCategoryColor = (category) => {
 
 function RoadmapList() {
     const navigate = useNavigate();
-    const [expandedRoadmap, setExpandedRoadmap] = useState(null);
     const [roadmaps, setRoadmaps] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -101,12 +98,6 @@ function RoadmapList() {
                     }));
                     
                     setRoadmaps(transformedPaths);
-                    
-                    // Auto-expand first roadmap if exists
-                    if (transformedPaths.length > 0) {
-                        setExpandedRoadmap(transformedPaths[0].id);
-                    }
-                    
                     setLoading(false);
                     return;
                 }
@@ -139,11 +130,6 @@ function RoadmapList() {
                         createdAt: roadmap.created_at
                     }));
                     setRoadmaps(transformedData);
-
-                    // Auto-expand first roadmap if exists
-                    if (transformedData.length > 0) {
-                        setExpandedRoadmap(transformedData[0].id);
-                    }
                 }
             } catch (err) {
                 console.error('Error fetching roadmaps:', err);
@@ -296,10 +282,6 @@ function RoadmapList() {
         }
     ];
 
-    const toggleRoadmap = (id) => {
-        setExpandedRoadmap(expandedRoadmap === id ? null : id);
-    };
-
     const handleDeleteRoadmap = async (e, roadmapId) => {
         e.stopPropagation();
 
@@ -384,13 +366,10 @@ function RoadmapList() {
                 {roadmaps.map((roadmap) => (
                     <div
                         key={roadmap.id}
-                        className={`roadmap-card ${expandedRoadmap === roadmap.id ? 'expanded' : ''}`}
+                        className="roadmap-card"
                     >
-                        {/* Card Header - Clickable */}
-                        <div
-                            className="roadmap-card-header"
-                            onClick={() => toggleRoadmap(roadmap.id)}
-                        >
+                        {/* Card Header */}
+                        <div className="roadmap-card-header">
                             <div className="roadmap-info">
                                 <div
                                     className="roadmap-icon"
@@ -439,159 +418,18 @@ function RoadmapList() {
                                         </button>
                                     </>
                                 )}
-                                <div className="expand-icon">
-                                    {expandedRoadmap === roadmap.id ? (
-                                        <BsChevronUp size={20} />
-                                    ) : (
-                                        <BsChevronDown size={20} />
-                                    )}
-                                </div>
+                                <button
+                                    className="expand-detail-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/roadmap/${roadmap.id}`);
+                                    }}
+                                >
+                                    Xem chi tiết lộ trình
+                                    <BsArrowRight size={16} />
+                                </button>
                             </div>
                         </div>
-
-                        {/* Expanded Content */}
-                        {expandedRoadmap === roadmap.id && (
-                            <div className="roadmap-card-content">
-                                {/* Central Hub */}
-                                <div className="roadmap-hub">
-                                    <div
-                                        className="hub-badge"
-                                        style={{ backgroundColor: roadmap.color }}
-                                    >
-                                        {roadmap.title}
-                                    </div>
-                                </div>
-
-                                {/* Two Column Layout */}
-                                <div className="roadmap-columns">
-                                    {/* Left Column */}
-                                    <div className="roadmap-column left-column">
-                                        {roadmap.columns
-                                            .filter((_, index) => index % 2 === 0)
-                                            .map((column) => (
-                                                <div key={column.id || column.title} className="column-section">
-                                                    <div className="column-header">
-                                                        <span
-                                                            className="column-number"
-                                                            style={{ backgroundColor: column.color || roadmap.color }}
-                                                        >
-                                                            {column.id || ''}
-                                                        </span>
-                                                        <h4
-                                                            className="column-title"
-                                                            style={{ color: column.color || roadmap.color }}
-                                                        >
-                                                            {column.title}
-                                                        </h4>
-                                                    </div>
-                                                    <div className="column-items">
-                                                        {(column.items || []).map((item, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className={`roadmap-item ${item.status === 'completed' ? 'completed' : ''}`}
-                                                            >
-                                                                <BsArrowRight className="item-arrow" />
-                                                                <span>{typeof item === 'object' ? item.text : item}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
-
-                                    {/* Connector Lines */}
-                                    <div className="column-connector">
-                                        <svg className="connector-svg" viewBox="0 0 100 400">
-                                            <path
-                                                d="M 50 0 L 50 80 M 50 80 L 0 80 M 50 80 L 100 80
-                                                   M 0 80 L 0 180 M 100 80 L 100 180
-                                                   M 0 180 L 50 180 M 100 180 L 50 180
-                                                   M 50 180 L 50 260 M 50 260 L 0 260 M 50 260 L 100 260
-                                                   M 0 260 L 0 360 M 100 260 L 100 360
-                                                   M 0 360 L 50 360 M 100 360 L 50 360
-                                                   M 50 360 L 50 400"
-                                                fill="none"
-                                                stroke={roadmap.color}
-                                                strokeWidth="2"
-                                                strokeDasharray="5,5"
-                                            />
-                                        </svg>
-                                    </div>
-
-                                    {/* Right Column */}
-                                    <div className="roadmap-column right-column">
-                                        {roadmap.columns
-                                            .filter((_, index) => index % 2 === 1)
-                                            .map((column) => (
-                                                <div key={column.id || column.title} className="column-section">
-                                                    <div className="column-header">
-                                                        <span
-                                                            className="column-number"
-                                                            style={{ backgroundColor: column.color || roadmap.color }}
-                                                        >
-                                                            {column.id || ''}
-                                                        </span>
-                                                        <h4
-                                                            className="column-title"
-                                                            style={{ color: column.color || roadmap.color }}
-                                                        >
-                                                            {column.title}
-                                                        </h4>
-                                                    </div>
-                                                    <div className="column-items">
-                                                        {(column.items || []).map((item, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                className={`roadmap-item ${item.status === 'completed' ? 'completed' : ''}`}
-                                                            >
-                                                                <BsArrowRight className="item-arrow" />
-                                                                <span>{typeof item === 'object' ? item.text : item}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
-                                </div>
-
-                                {/* Final Step */}
-                                {roadmap.finalStep && (
-                                    <div className="final-step">
-                                        <div className="final-step-header">
-                                            <span
-                                                className="final-number"
-                                                style={{ backgroundColor: roadmap.color }}
-                                            >
-                                                5
-                                            </span>
-                                            <h4 className="final-title">{roadmap.finalStep.title}</h4>
-                                        </div>
-                                        <div className="final-items">
-                                            {roadmap.finalStep.items.map((item, idx) => (
-                                                <div key={idx} className="final-item">
-                                                    <BsArrowRight className="item-arrow" />
-                                                    <span>{item}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* View Detail Button */}
-                                <div className="card-actions">
-                                    <button
-                                        className="view-detail-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/roadmap/${roadmap.id}`);
-                                        }}
-                                    >
-                                        Xem chi tiết lộ trình
-                                        <BsArrowRight />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>

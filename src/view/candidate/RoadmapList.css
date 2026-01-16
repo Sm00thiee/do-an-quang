@@ -187,6 +187,36 @@
     margin: 0;
 }
 
+/* Expand Detail Button */
+.expand-detail-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 10px 16px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.expand-detail-btn:hover {
+    background-color: #0052CC;
+    box-shadow: var(--shadow-md);
+}
+
+.expand-detail-btn:active {
+    transform: translateY(1px);
+}
+
+.expand-detail-btn svg {
+    transition: transform 0.2s ease;
+}
+
 .expand-icon {
     width: 40px;
     height: 40px;
@@ -207,19 +237,6 @@
 .roadmap-card-content {
     padding: 0 var(--spacing-lg) var(--spacing-lg);
     border-top: 1px solid var(--border-light);
-    animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 /* Central Hub Badge */
