@@ -1,14 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BsX } from "react-icons/bs";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import MarkdownRenderer from "../../components/MarkdownRenderer";
+import { fetchLessonMarkdown, getLessonFileName, extractLessonIdFromTitle } from "../../services/courseContentService";
 import "./LessonDetailDrawer.css";
 
 /**
  * LessonDetailDrawer Component
  * Displays lesson details in a right-side drawer with:
  * - Title and description
- * - Text content sections (UI, UX, Importance)
+ * - Markdown content from Supabase storage
  * - YouTube video embed
  * - Related resources with chips (Article, Course, Official Web)
  * - Download PDF button (downloads all roadmap lessons as ZIP)
@@ -16,6 +18,59 @@ import "./LessonDetailDrawer.css";
 function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState("");
+    const [markdownContent, setMarkdownContent] = useState(null);
+    const [isLoadingContent, setIsLoadingContent] = useState(false);
+    const [contentError, setContentError] = useState(null);
+    
+    // Fetch markdown content when lesson changes
+    useEffect(() => {
+        const loadMarkdownContent = async () => {
+            if (!lesson) {
+                setMarkdownContent(null);
+                return;
+            }
+
+            // Get lesson ID - either from lesson object or extract from title
+            let lessonId = lesson.id;
+            if (!lessonId && lesson.title) {
+                lessonId = extractLessonIdFromTitle(lesson.title);
+                console.log(`[LessonDrawer] Extracted lesson ID from title: ${lessonId}`);
+            }
+
+            if (!lessonId) {
+                console.warn(`[LessonDrawer] Could not determine lesson ID for: ${lesson.title}`);
+                setMarkdownContent(null);
+                return;
+            }
+
+            setIsLoadingContent(true);
+            setContentError(null);
+
+            try {
+                const fileName = getLessonFileName(lessonId);
+                
+                if (!fileName) {
+                    console.warn(`[LessonDrawer] No markdown file mapping for lesson: ${lessonId}`);
+                    setMarkdownContent(null);
+                    setIsLoadingContent(false);
+                    return;
+                }
+
+                console.log(`[LessonDrawer] Loading markdown for lesson: ${lessonId}`);
+                const content = await fetchLessonMarkdown(fileName);
+                setMarkdownContent(content);
+            } catch (error) {
+                console.error(`[LessonDrawer] Error loading markdown:`, error);
+                setContentError(error.message);
+            } finally {
+                setIsLoadingContent(false);
+            }
+        };
+
+        if (isOpen) {
+            loadMarkdownContent();
+        }
+    }, [lesson, lesson?.id, lesson?.title, isOpen]);
     
     if (!isOpen || !lesson) return null;
 
@@ -263,8 +318,28 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
                         </div>
                     )}
 
-                    {/* Content Sections */}
-                    {lesson.contentSections && lesson.contentSections.map((section, index) => (
+                    {/* Markdown Content from Supabase */}
+                    {isLoadingContent && (
+                        <div className="lesson-content-loading">
+                            <p>Đang tải nội dung...</p>
+                        </div>
+                    )}
+
+                    {contentError && (
+                        <div className="lesson-content-error">
+                            <p>Không thể tải nội dung bài học. Vui lòng thử lại sau.</p>
+                            <p style={{ fontSize: '14px', color: '#666' }}>{contentError}</p>
+                        </div>
+                    )}
+
+                    {markdownContent && !isLoadingContent && (
+                        <div className="lesson-markdown-section">
+                            <MarkdownRenderer content={markdownContent} />
+                        </div>
+                    )}
+
+                    {/* Fallback: Display old content sections if markdown not available */}
+                    {!markdownContent && !isLoadingContent && !contentError && lesson.contentSections && lesson.contentSections.map((section, index) => (
                         <div key={index} className="lesson-content-section">
                             <h3 className="section-heading">{section.heading}</h3>
                             {section.description && (

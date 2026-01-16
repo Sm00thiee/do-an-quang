@@ -214,10 +214,6 @@
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
-  .markdown-content {
-    color: #e6e6e6;
-  }
-
   .markdown-content h1,
   .markdown-content h2 {
     border-bottom-color: #30363d;

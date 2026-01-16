@@ -1,13 +1,15 @@
 /**
  * MarkdownRenderer Component
  * Ported from CourseAiChat/src/components/MarkdownRenderer.tsx
- * Renders AI responses with markdown support
+ * Renders AI responses with markdown support and syntax highlighting
  */
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
 import './MarkdownRenderer.css';
 
 const MarkdownRenderer = ({ content }) => {
@@ -15,7 +17,7 @@ const MarkdownRenderer = ({ content }) => {
     <div className="markdown-content">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, rehypeHighlight]}
         components={{
           // Customize code blocks
           code({ node, inline, className, children, ...props }) {

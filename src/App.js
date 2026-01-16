@@ -6,6 +6,7 @@ import CompanyList from "./view/candidate/CompanyList";
 import Company from "./view/candidate/Company";
 import JobList from "./view/candidate/JobList";
 import JobSearch from "./view/candidate/JobSearch";
+import JobSearchResult from "./view/candidate/JobSearchResult";
 import Job from "./view/candidate/Job";
 import EmployerLayout from "./view/employer/layouts/Layout";
 import EmployerLogin from "./view/employer/auth/Login";
@@ -60,8 +61,8 @@ function App() {
                     <Route path="companies" element={<CompanyList />} />
                     <Route path="contact" element={<Contact />} />
                     <Route path="companies/:id" element={<Company />} />
-                    <Route path="jobs" element={<JobSearch />} />
-                    <Route path="jobs-old" element={<JobList />} />
+                    <Route path="jobs" element={<JobList />} />
+                    <Route path="job-search" element={<JobSearchResult />} />
                     <Route path="jobs/:id" element={<Job />} />
                     <Route path="roadmap" element={<RoadmapList />} />
                     <Route path="roadmap/:id" element={<RoadmapDetail />} />

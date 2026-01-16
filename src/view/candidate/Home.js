@@ -313,7 +313,34 @@ function Home() {
 
   // Custom markdown component that tracks lesson context
   const MarkdownWithLessonLinks = ({ content }) => {
-    const [currentLessonTitle, setCurrentLessonTitle] = useState('');
+    // Helper function to extract lesson title from the DOM when link is clicked
+    const extractLessonTitleFromDOM = (linkElement) => {
+      // The structure is: <p><strong>Bài X. TITLE</strong> 🔗 <a>Xem bài học</a></p>
+      const parentP = linkElement.closest('p');
+      if (parentP) {
+        const strongTag = parentP.querySelector('strong');
+        if (strongTag) {
+          const title = strongTag.textContent;
+          console.log('[Home] Extracted title from DOM:', title);
+          return title;
+        }
+      }
+      // Fallback: try to find the previous sibling strong tag
+      let sibling = linkElement.previousSibling;
+      while (sibling) {
+        if (sibling.nodeType === Node.TEXT_NODE && sibling.textContent.includes('🔗')) {
+          sibling = sibling.previousSibling;
+          continue;
+        }
+        if (sibling.nodeName === 'STRONG') {
+          const title = sibling.textContent;
+          console.log('[Home] Extracted title from sibling:', title);
+          return title;
+        }
+        sibling = sibling.previousSibling;
+      }
+      return null;
+    };
 
     return (
       <ReactMarkdown 
@@ -329,7 +356,9 @@ function Home() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleLessonClick(currentLessonTitle || "Bài học", href);
+                    // Extract title from DOM at click time
+                    const title = extractLessonTitleFromDOM(e.target) || "Bài học";
+                    handleLessonClick(title, href);
                   }}
                   style={{ color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer' }}
                   {...props}
@@ -347,25 +376,12 @@ function Home() {
             );
           },
           strong: ({ node, children, ...props }) => {
-            // Check if this strong tag contains a lesson title
+            // Mark strong tags with lesson titles with a data attribute for easier extraction
             const text = children && children.toString();
             if (text && text.match(/^Bài \d+\./)) {
-              // Extract lesson title and store it
-              const title = text.replace(/^Bài \d+\.\s*/, '');
-              setCurrentLessonTitle(title);
+              return <strong data-lesson-title="true" {...props}>{children}</strong>;
             }
             return <strong {...props}>{children}</strong>;
-          },
-          p: ({ node, children, ...props }) => {
-            // Reset current lesson title for new paragraphs that don't start with "Bài"
-            const text = children && children.toString();
-            if (text && !text.match(/^Bài \d+\./)) {
-              // Only reset if we're moving to a new section
-              if (!text.includes('🔗') && !text.includes('⏱️')) {
-                setTimeout(() => setCurrentLessonTitle(''), 0);
-              }
-            }
-            return <p {...props}>{children}</p>;
           }
         }}
       >
