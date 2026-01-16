@@ -1,0 +1,15 @@
+Original:
+Marketing l├á qu├í tr├¼nh nghi├¬n c ß╗⌐u, ph├ón t├¡ch v├á tri ß╗ân khai c├íc ho ß║ít ─æß╗Öng nh ß║▒m tß║ío ra gi├í 
+trß╗ï cho kh├ích h├áng, t ß╗½ ─æ├│ ─æ├íp ß╗⌐ng nhu c ß║ºu cß╗ºa hß╗ì v├á gi├║p doanh nghi ß╗çp ─æß║ít ─æ╞░ß╗úc mß╗Ñc 
+ti├¬u kinh doanh. Marketing kh├┤ng ch ß╗ë dß╗½ng lß║íi ß╗ƒ viß╗çc quß║úng b├í s ß║ún phß║⌐m m├á c├▓n bao 
+gß╗ôm viß╗çc hiß╗âu thß╗ï tr╞░ß╗¥ng, x├óy d ß╗▒ng sß║ún phß║⌐m ph├╣ h ß╗úp, ─æß╗ïnh gi├í h ß╗úp l├╜, l ß╗▒a chß╗ìn k├¬nh 
+ph├ón ph ß╗æi v├á truy ß╗ün th├┤ng hi ß╗çu quß║ú.
+
+================================================================================
+
+Fixed:
+Marketing l├á qu├í tr├¼nh nghi├¬ncß╗⌐u, ph├ón t├¡ch v├á tri ß╗ân khai c├íc ho ß║ít ─æß╗Öng nh ß║▒m tß║ío ra gi├í 
+trß╗ï cho kh├ích h├áng,tß╗½ ─æ├│ ─æ├íp ß╗⌐ng nhucß║ºu cß╗ºa hß╗ì v├á gi├║p doanh nghi ß╗çp ─æß║ít ─æ╞░ß╗úc mß╗Ñc 
+ti├¬u kinh doanh. Marketing kh├┤ng chß╗ëdß╗½ng lß║íiß╗ƒviß╗çc quß║úng b├ísß║ún phß║⌐m m├á c├▓n bao 
+gß╗ôm viß╗çc hiß╗âu thß╗ï tr╞░ß╗¥ng, x├óydß╗▒ng sß║ún phß║⌐m ph├╣hß╗úp, ─æß╗ïnh gi├íhß╗úp l├╜,lß╗▒a chß╗ìn k├¬nh 
+ph├ón ph ß╗æi v├á truy ß╗ün th├┤ng hi ß╗çu quß║ú.
