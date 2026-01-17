@@ -84,7 +84,7 @@
 .job-search-hero {
   background: var(--bg-brand-strong-08);
   height: 520px;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
   width: 100%;
 }
@@ -183,6 +183,31 @@
   border-radius: var(--border-radius-8px);
 }
 
+/* Page Number Badge */
+.page-number-badge {
+  position: absolute;
+  right: 12px;
+  top: 146px;
+  width: 100px;
+  height: 100px;
+  background: red;
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 17px 28px;
+}
+
+.page-number-badge span {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: var(--heading-l-font-size);
+  line-height: var(--heading-l-line-height);
+  color: white;
+  text-align: center;
+}
+
 /* ========================================
    Main Content
    ======================================== */
@@ -211,34 +236,29 @@
   width: 100%;
 }
 
-/* Job Card - 3 columns, exact Figma design - rectangular/horizontal layout */
+/* Job Card - 3 columns */
 .job-card {
   width: 384px;
-  max-width: 384px;
-  min-height: 132px;
-  height: auto;
   background: var(--bg-neutral-faded-white);
   border: 1px solid var(--stroke-neutral-default-04);
   border-radius: var(--border-radius-8px);
-  padding: var(--padding-12px);
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--padding-12px);
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
+  transition: all 0.2s;
 }
 
 .job-card:hover {
   box-shadow: var(--drop-shadow-neutral);
   transform: translateY(-2px);
-  border-color: var(--stroke-brand-default-06);
 }
 
 /* Job Card Content */
 .job-card-content {
   display: flex;
-  gap: var(--padding-12px);
+  gap: 12px;
   align-items: flex-start;
   width: 100%;
 }
@@ -246,8 +266,6 @@
 .company-logo {
   width: 48px;
   height: 48px;
-  min-width: 48px;
-  min-height: 48px;
   border: 1px solid var(--stroke-neutral-default-04);
   border-radius: var(--border-radius-8px);
   flex-shrink: 0;
@@ -255,22 +273,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-neutral-faded-white);
 }
 
 .company-logo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .job-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--padding-8px);
+  gap: 8px;
   min-width: 0;
-  overflow: hidden;
 }
 
 .job-title {
@@ -301,7 +317,6 @@
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: var(--body-m-font-size);
-  line-height: var(--body-m-line-height);
   color: var(--text-neutral-default-06);
   margin: 0;
 }
@@ -321,17 +336,16 @@
 
 .job-tags {
   display: flex;
-  gap: var(--padding-8px);
+  gap: 8px;
   align-items: center;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
 }
 
 .tag {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--padding-8px);
   padding: var(--padding-4px) var(--padding-8px);
   height: 24px;
   border-radius: var(--border-radius-8px);
@@ -340,10 +354,6 @@
   font-size: var(--body-m-font-size);
   line-height: var(--body-m-line-height);
   white-space: nowrap;
-  flex-shrink: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
 }
 
 .salary-tag {
@@ -356,7 +366,7 @@
   color: var(--text-neutral-strong-08);
 }
 
-/* Save Job Button - Exact Figma styling */
+/* Save Job Button */
 .save-job-button {
   width: 24px;
   height: 24px;
@@ -368,22 +378,17 @@
   justify-content: center;
   padding: 0;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.save-job-button:hover {
-  transform: scale(1.1);
 }
 
 .save-job-button .icon-unsaved {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   color: var(--text-neutral-strong-09);
 }
 
 .save-job-button .icon-saved {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   color: var(--fill-red);
 }
 

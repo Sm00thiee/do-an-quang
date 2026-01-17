@@ -294,6 +294,11 @@ const JobSearch = () => {
             />
           </div>
         </div>
+
+        {/* Page Number Badge */}
+        <div className="page-number-badge">
+          <span>{currentPageNum}</span>
+        </div>
       </div>
 
       {/* Main Content */}
