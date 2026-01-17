@@ -248,6 +248,8 @@
   height: 48px;
   min-width: 48px;
   min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
   border: 1px solid var(--stroke-neutral-default-04);
   border-radius: var(--border-radius-8px);
   flex-shrink: 0;
