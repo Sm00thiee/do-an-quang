@@ -5,6 +5,7 @@ import { BsBookmark, BsBookmarkFill, BsShare, BsClock, BsGeoAlt, BsCurrencyDolla
 import { BiBuildings } from "react-icons/bi";
 import jobService from "../../services/jobService";
 import { useCandidateAuthStore } from "../../stores/candidateAuthStore";
+import ApplyJobPopup from "../../components/ApplyJobPopup";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
@@ -24,8 +25,7 @@ function Job() {
   const [isApplied, setIsApplied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [file, setFile] = useState(null);
-  const [uploadMethod, setUploadMethod] = useState(""); // "upload" or "create"
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getJobInf = async () => {
     try {
@@ -55,30 +55,41 @@ function Job() {
     }
   };
 
-  const handleApply = async () => {
-    if (uploadMethod === "upload" && !file) {
-      alert("Vui lòng chọn file CV!");
-      return;
-    }
-
+  const handleApplySubmit = async (formData) => {
+    setIsSubmitting(true);
     try {
-      if (uploadMethod === "upload") {
-        // TODO: Implement file upload to Supabase storage
-        // For now, just record the application
-        await jobService.applyToJob(id, user.id, {
-          cv_url: null, // Will be implemented with file upload
-          cover_letter: null,
-        });
-      } else {
-        await jobService.applyToJob(id, user.id);
+      let cvUrl = null;
+
+      // Upload CV file if provided
+      if (formData.cvFile) {
+        cvUrl = await jobService.uploadCV(formData.cvFile, user.id, id);
       }
+
+      // Prepare application data
+      const applicationData = {
+        cv_url: cvUrl,
+        cover_letter: null,
+        resume_data: {
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+        },
+      };
+
+      // Submit application
+      await jobService.applyToJob(id, user.id, applicationData);
 
       alert("Ứng tuyển thành công!");
       setShowApplyModal(false);
+      setIsApplied(true);
+      // Refresh page to update UI
       window.location.reload();
     } catch (error) {
       console.error('Error applying to job:', error);
-      alert('Có lỗi xảy ra khi ứng tuyển. Vui lòng thử lại sau.');
+      const errorMessage = error.message || 'Có lỗi xảy ra khi ứng tuyển. Vui lòng thử lại sau.';
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -339,92 +350,15 @@ function Job() {
         </div>
       </div>
 
-      {/* Apply Modal */}
-      {showApplyModal && (
-        <div className="modal-overlay" onClick={() => setShowApplyModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <p className="modal-subtitle">Ứng tuyển vào vị trí</p>
-                <h2 className="modal-title">{job.jname}</h2>
-                <p className="modal-company">{job.employer.name}</p>
-              </div>
-              <button className="modal-close" onClick={() => setShowApplyModal(false)}>
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Họ và tên</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={user ? `${user.name?.lastname || ''} ${user.name?.firstname || ''}`.trim() || user.email || '' : ""}
-                  disabled
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Email</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={user?.email || ""}
-                  disabled
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Chọn hồ sơ</label>
-                <div className="upload-options">
-                  <button
-                    className={`upload-option-btn ${uploadMethod === "create" ? "active" : ""}`}
-                    onClick={() => {
-                      setUploadMethod("create");
-                      setShowApplyModal(false);
-                      navigate("/candidate/resumes");
-                    }}
-                  >
-                    📝 Tạo hồ sơ trực tuyến
-                  </button>
-                  <button
-                    className={`upload-option-btn ${uploadMethod === "upload" ? "active" : ""}`}
-                    onClick={() => setUploadMethod("upload")}
-                  >
-                    📤 Tải lên CV có sẵn
-                  </button>
-                </div>
-
-                {uploadMethod === "upload" && (
-                  <input
-                    type="file"
-                    className="file-input"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => setFile(e.target.files[0])}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="modal-btn modal-btn-primary"
-                onClick={handleApply}
-                disabled={uploadMethod === "upload" && !file}
-              >
-                Nộp hồ sơ
-              </button>
-              <button
-                className="modal-btn modal-btn-secondary"
-                onClick={() => setShowApplyModal(false)}
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Apply Job Popup */}
+      <ApplyJobPopup
+        job={job}
+        user={user}
+        isOpen={showApplyModal}
+        onClose={() => setShowApplyModal(false)}
+        onSubmit={handleApplySubmit}
+        isSubmitting={isSubmitting}
+      />
     </div>
   );
 }

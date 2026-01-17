@@ -190,10 +190,65 @@ export const processJobSaving = async (jobId, candidateId, status) => {
 };
 
 /**
+ * Upload CV file to Supabase Storage
+ * @param {File} file - The CV file to upload
+ * @param {string} userId - The UUID of the user
+ * @param {string} jobId - The UUID of the job
+ * @returns {Promise<string>} The public URL of the uploaded file
+ */
+export const uploadCV = async (file, userId, jobId) => {
+  try {
+    if (!file) {
+      throw new Error('No file provided');
+    }
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.');
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      throw new Error('File size exceeds 5MB limit.');
+    }
+
+    // Generate unique filename with timestamp
+    const timestamp = Date.now();
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = `${userId}/${jobId}/${fileName}`;
+
+    // Upload file to Supabase Storage
+    const { data, error } = await supabaseMain.storage
+      .from('cvs')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseMain.storage
+      .from('cvs')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Exception in uploadCV:', error);
+    throw error;
+  }
+};
+
+/**
  * Apply to a job
  * @param {string} jobId - The UUID of the job
  * @param {string} candidateId - The UUID of the candidate
- * @param {Object} applicationData - Application data (cv_url, cover_letter, etc.)
+ * @param {Object} applicationData - Application data (cv_url, cover_letter, resume_data, etc.)
  * @returns {Promise<void>}
  */
 export const applyToJob = async (jobId, candidateId, applicationData = {}) => {
@@ -208,11 +263,14 @@ export const applyToJob = async (jobId, candidateId, applicationData = {}) => {
       });
 
     if (error) {
+      // Check if already applied (unique constraint violation)
+      if (error.code === '23505') {
+        throw new Error('Bạn đã ứng tuyển cho vị trí này rồi.');
+      }
       throw error;
     }
 
-    // Increment application count
-    await supabaseMain.rpc('increment_job_applications', { job_id: jobId });
+    // Note: Application count is automatically updated by trigger in database
   } catch (error) {
     console.error('Exception in applyToJob:', error);
     throw error;
@@ -284,6 +342,7 @@ export default {
   checkApplying,
   checkJobSaved,
   processJobSaving,
+  uploadCV,
   applyToJob,
   getJobList,
 };

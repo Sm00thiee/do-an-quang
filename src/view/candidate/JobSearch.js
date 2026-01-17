@@ -184,7 +184,7 @@ const JobSearch = () => {
 
   useEffect(() => {
     loadJobs();
-  }, [currentPageNum, searchQuery]);
+  }, [currentPageNum]);
 
   const loadJobs = async () => {
     setIsLoading(true);
@@ -216,15 +216,9 @@ const JobSearch = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setCurrentPageNum(1);
-    updateURL();
-  };
-
-  const updateURL = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (currentPageNum > 1) params.set('page', currentPageNum);
-    setSearchParams(params);
+    if (searchQuery.trim()) {
+      navigate(`/job-search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const handleToggleSaveJob = async (jobId, e) => {

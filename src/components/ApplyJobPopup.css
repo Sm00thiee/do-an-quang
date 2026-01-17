@@ -1,0 +1,372 @@
+/* Apply Job Popup Overlay */
+.apply-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+/* Popup Content */
+.apply-popup-content {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 768px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.apply-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.apply-popup-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 28px;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.apply-popup-close {
+  background: #60a5fa;
+  border: none;
+  border-radius: 9999px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  flex-shrink: 0;
+  padding: 12px;
+  transition: background-color 0.2s;
+}
+
+.apply-popup-close:hover {
+  background: #3b82f6;
+}
+
+.apply-popup-close svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Section */
+.apply-popup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.apply-popup-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apply-popup-icon {
+  width: 24px;
+  height: 24px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.apply-popup-section-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 24px;
+  color: #111827;
+  margin: 0;
+}
+
+/* CV Upload Area */
+.apply-popup-upload-area {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e5e7eb;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.apply-popup-upload-area.dragging {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.apply-popup-upload-text {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #111827;
+  text-align: center;
+  margin: 0;
+}
+
+.apply-popup-upload-btn {
+  border: 1px solid #3b82f6;
+  background: white;
+  color: #3b82f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.apply-popup-upload-btn:hover {
+  background: #eff6ff;
+}
+
+.apply-popup-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.apply-popup-file-info svg {
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.apply-popup-file-info span {
+  flex: 1;
+  font-size: 14px;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apply-popup-remove-file {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.apply-popup-remove-file:hover {
+  color: #dc2626;
+}
+
+.apply-popup-remove-file svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Form Header */
+.apply-popup-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  color: #111827;
+}
+
+.apply-popup-form-title {
+  margin: 0;
+}
+
+.apply-popup-required-note {
+  margin: 0;
+  font-weight: 500;
+  line-height: 0;
+}
+
+.required-asterisk {
+  color: #f43f5e;
+  font-weight: 500;
+}
+
+/* Form */
+.apply-popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.apply-popup-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.apply-popup-form-row {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+.apply-popup-form-row .apply-popup-form-group {
+  flex: 1;
+}
+
+.apply-popup-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apply-popup-input {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #111827;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.apply-popup-input::placeholder {
+  color: #9ca3af;
+}
+
+.apply-popup-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.apply-popup-input.error {
+  border-color: #ef4444;
+}
+
+.apply-popup-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin: 0;
+  margin-top: 4px;
+}
+
+/* Action Buttons */
+.apply-popup-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.apply-popup-btn {
+  border-radius: 8px;
+  padding: 12px;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.apply-popup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.apply-popup-btn-cancel {
+  background: white;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  width: 112px;
+  flex-shrink: 0;
+}
+
+.apply-popup-btn-cancel:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.apply-popup-btn-submit {
+  background: #3b82f6;
+  color: white;
+  flex: 1;
+}
+
+.apply-popup-btn-submit:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .apply-popup-content {
+    padding: 16px;
+    max-height: 95vh;
+  }
+
+  .apply-popup-form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .apply-popup-form-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .apply-popup-actions {
+    flex-direction: column;
+  }
+
+  .apply-popup-btn-cancel,
+  .apply-popup-btn-submit {
+    width: 100%;
+  }
+}

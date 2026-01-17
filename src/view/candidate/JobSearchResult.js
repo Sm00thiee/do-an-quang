@@ -9,6 +9,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BsSearch, BsBookmark, BsBookmarkFill, BsFunnel, BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import JobSearchService from '../../services/jobSearchService';
+import { useCandidateAuthStore } from '../../stores/candidateAuthStore';
 import { AppContext } from '../../App';
 import './JobSearchResult.css';
 
@@ -16,9 +17,11 @@ const JobSearchResult = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { setCurrentPage } = useContext(AppContext);
+  const user = useCandidateAuthStore((state) => state.current);
+  const isAuth = useCandidateAuthStore((state) => state.isAuth);
 
   // Search and filter state
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || 'UI/UX Design');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -37,14 +40,25 @@ const JobSearchResult = () => {
 
   // Saved jobs state
   const [savedJobIds, setSavedJobIds] = useState(new Set());
+  const [savingJobId, setSavingJobId] = useState(null);
 
   useEffect(() => {
     setCurrentPage('jobs');
-  }, [setCurrentPage]);
+    // Sync search query from URL params
+    const urlQuery = searchParams.get('q') || '';
+    setSearchQuery(urlQuery);
+  }, [setCurrentPage, searchParams]);
 
   useEffect(() => {
     searchJobs();
   }, [currentPageNum, filters, searchQuery]);
+
+  // Load saved jobs status on mount and when jobs change
+  useEffect(() => {
+    if (isAuth && user?.id && jobs.length > 0) {
+      loadSavedJobsStatus();
+    }
+  }, [isAuth, user?.id, jobs]);
 
   const searchJobs = async () => {
     setIsLoading(true);
@@ -155,17 +169,67 @@ const JobSearchResult = () => {
     setCurrentPageNum(1); // Reset to page 1 when filter changes
   };
 
+  const loadSavedJobsStatus = async () => {
+    if (!isAuth || !user?.id) return;
+
+    try {
+      const jobIds = jobs.map(job => job.id);
+      const savedStatusPromises = jobIds.map(jobId => 
+        JobSearchService.isJobSaved(jobId, user.id)
+      );
+      const results = await Promise.all(savedStatusPromises);
+      
+      const savedIds = new Set();
+      results.forEach((result, index) => {
+        if (result.success && result.isSaved) {
+          savedIds.add(jobIds[index]);
+        }
+      });
+      
+      setSavedJobIds(savedIds);
+    } catch (error) {
+      console.error('Error loading saved jobs status:', error);
+    }
+  };
+
   const toggleSaveJob = async (jobId) => {
-    setSavedJobIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(jobId)) {
-        newSet.delete(jobId);
+    if (!isAuth || !user?.id) {
+      alert('Vui lòng đăng nhập để lưu việc làm');
+      return;
+    }
+
+    setSavingJobId(jobId);
+    const isCurrentlySaved = savedJobIds.has(jobId);
+
+    try {
+      let result;
+      if (isCurrentlySaved) {
+        // Unsave job
+        result = await JobSearchService.removeSavedJob(jobId, user.id);
       } else {
-        newSet.add(jobId);
+        // Save job
+        result = await JobSearchService.saveJob(jobId, user.id);
       }
-      return newSet;
-    });
-    // TODO: Call API to save/unsave job
+
+      if (result.success) {
+        setSavedJobIds(prev => {
+          const newSet = new Set(prev);
+          if (isCurrentlySaved) {
+            newSet.delete(jobId);
+          } else {
+            newSet.add(jobId);
+          }
+          return newSet;
+        });
+      } else {
+        throw new Error(result.error || 'Có lỗi xảy ra');
+      }
+    } catch (error) {
+      console.error('Error toggling save job:', error);
+      alert(error.message || 'Có lỗi xảy ra khi lưu việc làm. Vui lòng thử lại.');
+    } finally {
+      setSavingJobId(null);
+    }
   };
 
   const handleApplyJob = (jobId) => {
@@ -367,9 +431,10 @@ const JobSearchResult = () => {
                           <button
                             className={`save-button ${isSaved ? 'saved' : ''}`}
                             onClick={() => toggleSaveJob(job.id)}
+                            disabled={savingJobId === job.id}
                           >
                             {isSaved ? <BsBookmarkFill /> : <BsBookmark />}
-                            <span>{isSaved ? 'Đã lưu' : 'Lưu việc làm'}</span>
+                            <span>{savingJobId === job.id ? 'Đang xử lý...' : (isSaved ? 'Đã lưu' : 'Lưu việc làm')}</span>
                           </button>
                           <button
                             className="apply-button"
