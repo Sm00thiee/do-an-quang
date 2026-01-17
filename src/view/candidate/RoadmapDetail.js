@@ -12,6 +12,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import roadmapApi from "../../api/roadmap";
 import { fetchAllGeneratedLearningPaths } from "../../services/api";
+import { extractLessonIdFromTitle } from "../../services/courseContentService";
 import "./Roadmap.css";
 import RoadmapPDFViewer from "./RoadmapPDFViewer";
 import LessonDetailDrawer from "./LessonDetailDrawer";
@@ -522,14 +523,37 @@ function RoadmapDetail() {
         setIsPDFViewerOpen(false);
     };
 
-    const handleOpenLessonDrawer = (lessonKey) => {
-        const lesson = getLessonById(lessonKey);
-        if (lesson) {
-            setSelectedLesson(lesson);
-            setIsLessonDrawerOpen(true);
-        } else {
-            toast.warning('Nội dung bài học chưa có sẵn');
+    const handleOpenLessonDrawer = (lessonKeyOrTitle) => {
+        // Try to get lesson from sampleLessons first (for backwards compatibility)
+        let lesson = getLessonById(lessonKeyOrTitle);
+        
+        // If not found in sampleLessons, create a basic lesson object
+        if (!lesson) {
+            // If lessonKeyOrTitle looks like a lesson key (e.g., "uiux-1"), use it as ID
+            // Otherwise, treat it as a title and extract the ID
+            let lessonId = lessonKeyOrTitle;
+            let lessonTitle = lessonKeyOrTitle;
+            
+            // Check if it looks like a lesson key pattern (field-number)
+            if (/^[a-z]+-\d+$/.test(lessonKeyOrTitle)) {
+                lessonId = lessonKeyOrTitle;
+                lessonTitle = lessonKeyOrTitle; // Will be replaced by fetched metadata
+            } else {
+                // It's a title, try to extract lesson ID from it
+                lessonTitle = lessonKeyOrTitle;
+                lessonId = lessonKeyOrTitle; // Let the drawer extract the proper ID
+            }
+            
+            lesson = {
+                id: lessonId,
+                title: lessonTitle
+            };
+            
+            console.log(`[RoadmapDetail] Created basic lesson object:`, lesson);
         }
+        
+        setSelectedLesson(lesson);
+        setIsLessonDrawerOpen(true);
     };
 
     const handleCloseLessonDrawer = () => {
@@ -730,15 +754,17 @@ function RoadmapDetail() {
                                                     className="resource-item clickable"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // Map resource to lesson key
-                                                        // For demo, we'll use predefined mappings
-                                                        const lessonMappings = {
-                                                            'Thiết kế UI/UX': 'uiux-design',
-                                                            'Khái niệm cơ bản của Marketing: 4P, 7P': 'marketing-4p-7p',
-                                                            'Hành vi người tiêu dùng (Consumer Behavior)': 'consumer-behavior'
-                                                        };
-                                                        const lessonKey = lessonMappings[resource] || 'uiux-design';
-                                                        handleOpenLessonDrawer(lessonKey);
+                                                        // Extract lesson ID from the resource title using the service function
+                                                        // This will handle titles like "BÀI 1. UI/UX DESIGN LÀ GÌ?" correctly
+                                                        const lessonId = extractLessonIdFromTitle(resource);
+                                                        if (lessonId) {
+                                                            console.log(`[RoadmapDetail] Opening lesson: ${lessonId} from resource: ${resource}`);
+                                                            handleOpenLessonDrawer(lessonId);
+                                                        } else {
+                                                            console.warn(`[RoadmapDetail] Could not extract lesson ID from: ${resource}`);
+                                                            // Fallback: pass the title directly
+                                                            handleOpenLessonDrawer(resource);
+                                                        }
                                                     }}
                                                 >
                                                     <span className="resource-icon">📚</span>

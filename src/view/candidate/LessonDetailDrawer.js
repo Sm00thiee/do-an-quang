@@ -3,7 +3,7 @@ import { BsX } from "react-icons/bs";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import MarkdownRenderer from "../../components/MarkdownRenderer";
-import { fetchLessonMarkdown, getLessonFileName, extractLessonIdFromTitle } from "../../services/courseContentService";
+import { fetchLessonMarkdown, fetchLessonMetadata, getLessonFileName, extractLessonIdFromTitle } from "../../services/courseContentService";
 import "./LessonDetailDrawer.css";
 
 /**
@@ -19,14 +19,16 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState("");
     const [markdownContent, setMarkdownContent] = useState(null);
+    const [lessonMetadata, setLessonMetadata] = useState(null);
     const [isLoadingContent, setIsLoadingContent] = useState(false);
     const [contentError, setContentError] = useState(null);
     
-    // Fetch markdown content when lesson changes
+    // Fetch lesson metadata and markdown content when lesson changes
     useEffect(() => {
-        const loadMarkdownContent = async () => {
+        const loadLessonContent = async () => {
             if (!lesson) {
                 setMarkdownContent(null);
+                setLessonMetadata(null);
                 return;
             }
 
@@ -40,6 +42,7 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
             if (!lessonId) {
                 console.warn(`[LessonDrawer] Could not determine lesson ID for: ${lesson.title}`);
                 setMarkdownContent(null);
+                setLessonMetadata(null);
                 return;
             }
 
@@ -47,7 +50,13 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
             setContentError(null);
 
             try {
-                const fileName = getLessonFileName(lessonId);
+                // Fetch lesson metadata from database (includes title, YouTube URL, PDF URL, etc.)
+                const metadata = await fetchLessonMetadata(lessonId);
+                setLessonMetadata(metadata);
+                console.log(`[LessonDrawer] Lesson metadata:`, metadata);
+
+                // Get markdown file name - from metadata or fallback to mapping
+                const fileName = metadata?.markdown_file || getLessonFileName(lessonId);
                 
                 if (!fileName) {
                     console.warn(`[LessonDrawer] No markdown file mapping for lesson: ${lessonId}`);
@@ -60,7 +69,7 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
                 const content = await fetchLessonMarkdown(fileName);
                 setMarkdownContent(content);
             } catch (error) {
-                console.error(`[LessonDrawer] Error loading markdown:`, error);
+                console.error(`[LessonDrawer] Error loading lesson content:`, error);
                 setContentError(error.message);
             } finally {
                 setIsLoadingContent(false);
@@ -68,7 +77,7 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
         };
 
         if (isOpen) {
-            loadMarkdownContent();
+            loadLessonContent();
         }
     }, [lesson, lesson?.id, lesson?.title, isOpen]);
     
@@ -308,13 +317,13 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
                 <div className="lesson-drawer-content">
                     {/* Title */}
                     <div className="lesson-title-section">
-                        <h2 className="lesson-title">{lesson.title}</h2>
+                        <h2 className="lesson-title">{lessonMetadata?.title || lesson.title}</h2>
                     </div>
 
                     {/* Introduction */}
-                    {lesson.introduction && (
+                    {(lessonMetadata?.description || lesson.introduction) && (
                         <div className="lesson-intro-section">
-                            <p className="lesson-intro">{lesson.introduction}</p>
+                            <p className="lesson-intro">{lessonMetadata?.description || lesson.introduction}</p>
                         </div>
                     )}
 
@@ -365,13 +374,13 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
                         </div>
                     ))}
 
-                    {/* Video Section */}
-                    {lesson.videoUrl && (
+                    {/* Video Section - Use metadata YouTube URL */}
+                    {lessonMetadata?.youtube_url && (
                         <div className="lesson-video-section">
                             <div className="video-wrapper">
                                 <iframe
-                                    src={getYouTubeEmbedUrl(lesson.videoUrl)}
-                                    title={lesson.title}
+                                    src={getYouTubeEmbedUrl(lessonMetadata.youtube_url)}
+                                    title={lessonMetadata?.title || lesson.title}
                                     frameBorder="0"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                     allowFullScreen
@@ -381,20 +390,20 @@ function LessonDetailDrawer({ isOpen, onClose, lesson, roadmapData }) {
                         </div>
                     )}
 
-                    {/* Resources Divider */}
-                    {lesson.resources && lesson.resources.length > 0 && (
+                    {/* Resources Divider - Use metadata or fallback to lesson resources */}
+                    {((lessonMetadata?.resources && lessonMetadata.resources.length > 0) || (lesson.resources && lesson.resources.length > 0)) && (
                         <>
                             <div className="resources-divider">
                                 <div className="divider-line"></div>
                                 <div className="divider-chip">
-                                    <span>Free Resources</span>
+                                    <span>❤️ Free Resources</span>
                                 </div>
                                 <div className="divider-line"></div>
                             </div>
 
                             {/* Resources List */}
                             <div className="resources-section">
-                                {lesson.resources.map((resource, index) => (
+                                {(lessonMetadata?.resources || lesson.resources || []).map((resource, index) => (
                                     <div 
                                         key={index} 
                                         className="resource-item"
