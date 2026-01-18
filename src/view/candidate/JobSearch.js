@@ -15,12 +15,15 @@ import {
 } from 'react-icons/bs';
 import JobSearchService from '../../services/jobSearchService';
 import { AppContext } from '../../App';
+import { useCandidateAuthStore } from '../../stores/candidateAuthStore';
 import './JobSearch.css';
 
 const JobSearch = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, setCurrentPage } = useContext(AppContext);
+  const { setCurrentPage } = useContext(AppContext);
+  const user = useCandidateAuthStore((state) => state.current);
+  const isAuth = useCandidateAuthStore((state) => state.isAuth);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -31,125 +34,43 @@ const JobSearch = () => {
 
   // Pagination state
   const [currentPageNum, setCurrentPageNum] = useState(parseInt(searchParams.get('page')) || 1);
-  const [totalPages, setTotalPages] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
 
   // Saved jobs state
   const [savedJobIds, setSavedJobIds] = useState(new Set());
 
-  // Sample job data matching Figma design
-  const sampleJobs = [
-    {
-      id: 1,
-      title: 'UI/UX Designer (Web/Mobile App)',
-      company: { name: 'CÔNG TY CỔ PHẦN CÔNG NGHỆ ONUSLAB', logo_url: '/image/companies/onuslab.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: true
-    },
-    {
-      id: 2,
-      title: 'Home Trading System Developer - Windows',
-      company: { name: 'CÔNG TY CỔ PHẦN SMARTOSC', logo_url: '/image/companies/smartosc.png' },
-      salary: '22 - 45 triệu',
-      location: 'Hồ Chí Minh',
-      match_score: 90,
-      saved: true
-    },
-    {
-      id: 3,
-      title: 'Chuyên Viên Cao Cấp Phát Triển Ứng Dụng',
-      company: { name: 'Ngân Hàng Thương Mại Cổ Phần Thịnh Vượng Và Phát Triển', logo_url: '/image/companies/vpbank.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 4,
-      title: 'Nhân Viên Thiết Kế 3D - 1 Năm Kinh Nghiệm',
-      company: { name: 'Công Ty TNHH MTV Phong Việt', logo_url: '/image/companies/phongviet.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 5,
-      title: 'UI/UX Designer (Web/Mobile App)',
-      company: { name: 'CÔNG TY CỔ PHẦN CÔNG NGHỆ SMART SCORE', logo_url: '/image/companies/smartscore.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 6,
-      title: 'Nhân Viên IT',
-      company: { name: 'CÔNG TY TNHH ATEC SYSTEM VIỆT NAM', logo_url: '/image/companies/atec.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 7,
-      title: 'GRC Analyst (Governance, Risk, Compliance)',
-      company: { name: 'CÔNG TY TNHH MTV ABN INNOVATION', logo_url: '/image/companies/abn.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 8,
-      title: 'Kỹ Sư Lập Trình Nhúng Firmware Điện Tử',
-      company: { name: 'CÔNG TY TNHH EVSELAB', logo_url: '/image/companies/evselab.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 9,
-      title: 'IT Security Manager',
-      company: { name: 'CÔNG TY CỔ PHẦN SMARTOSC', logo_url: '/image/companies/smartosc2.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 10,
-      title: 'BrSE / Product Manager',
-      company: { name: 'CÔNG TY TNHH BORDER Z VIETNAM', logo_url: '/image/companies/borderz.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 11,
-      title: 'Lập Trình Viên IOS (Swift, Objective-C)',
-      company: { name: 'Công ty CP Giải pháp Thanh toán Việt', logo_url: '/image/companies/vietpay.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
-    },
-    {
-      id: 12,
-      title: 'Giảng Viên Công Nghệ Thông Tin/ Khoa Học',
-      company: { name: 'Trường Đại học CMC', logo_url: '/image/companies/cmc.png' },
-      salary: '7-12 triệu',
-      location: 'Hà Nội',
-      match_score: 90,
-      saved: false
+  // Load saved jobs status when jobs change
+  useEffect(() => {
+    if (isAuth && user?.id && jobs.length > 0) {
+      loadSavedJobsStatus();
     }
-  ];
+  }, [isAuth, user?.id, jobs]);
 
-  // Sample companies data
+  const loadSavedJobsStatus = async () => {
+    if (!isAuth || !user?.id) return;
+
+    try {
+      const jobIds = jobs.map((job) => job.id);
+      const savedStatusPromises = jobIds.map((jobId) =>
+        JobSearchService.isJobSaved(jobId, user.id)
+      );
+      const results = await Promise.all(savedStatusPromises);
+
+      const savedIds = new Set();
+      results.forEach((result, index) => {
+        if (result.success && result.isSaved) {
+          savedIds.add(jobIds[index]);
+        }
+      });
+
+      setSavedJobIds(savedIds);
+    } catch (error) {
+      console.error('Error loading saved jobs status:', error);
+    }
+  };
+
+  // Sample companies data - keeping as fallback only if database fetch fails
   const sampleCompanies = [
     {
       id: 1,
@@ -191,25 +112,62 @@ const JobSearch = () => {
     setError(null);
 
     try {
-      // In production, fetch from API
-      // For now, use sample data
-      setTimeout(() => {
-        setJobs(sampleJobs);
-        setCompanies(sampleCompanies);
-        setTotalPages(50);
-        setTotalJobs(sampleJobs.length);
-        setIsLoading(false);
+      // Fetch jobs from database
+      const filters = {
+        search: searchQuery || null,
+        page: currentPageNum,
+        limit: 12
+      };
 
-        // Initialize saved jobs
-        const savedIds = new Set();
-        sampleJobs.forEach(job => {
-          if (job.saved) savedIds.add(job.id);
-        });
-        setSavedJobIds(savedIds);
-      }, 500);
+      const result = await JobSearchService.searchJobs(filters);
+
+      if (result.success) {
+        // Transform database jobs to match component format
+        const transformedJobs = result.data.map((job) => ({
+          id: job.id,
+          title: job.title,
+          company: {
+            name: job.company?.name || 'Chưa cập nhật',
+            logo_url: job.company?.logo_url
+          },
+          salary: job.salary_min && job.salary_max
+            ? `${Math.round(job.salary_min / 1000000)}-${Math.round(job.salary_max / 1000000)} triệu`
+            : 'Thỏa thuận',
+          location: job.location?.city || job.location?.district || 'Chưa cập nhật',
+          match_score: 90, // This could be calculated based on user profile
+        }));
+
+        setJobs(transformedJobs);
+        setTotalPages(result.totalPages || 1);
+        setTotalJobs(result.total || 0);
+      } else {
+        setError('Không thể tải danh sách việc làm');
+        setJobs([]);
+      }
+
+      // Fetch featured companies from database
+      const companiesResult = await JobSearchService.getFeaturedCompanies(3);
+      if (companiesResult.success) {
+        const transformedCompanies = companiesResult.data.map((company) => ({
+          id: company.id,
+          name: company.name,
+          logo_url: company.logo_url,
+          employee_count: company.employee_count ? `${company.employee_count} nhân viên` : 'Chưa cập nhật',
+          industry: company.industry?.name_vi || 'Chưa cập nhật',
+          location: company.headquarters ? 
+            `${company.headquarters.district || ''} ${company.headquarters.city || ''}`.trim() || 'Chưa cập nhật'
+            : 'Chưa cập nhật'
+        }));
+        setCompanies(transformedCompanies);
+      } else {
+        // Fallback to sample companies if API fails
+        setCompanies(sampleCompanies);
+      }
     } catch (err) {
       console.error('Load jobs error:', err);
       setError('Đã xảy ra lỗi khi tải danh sách việc làm');
+      setJobs([]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -222,24 +180,41 @@ const JobSearch = () => {
   };
 
   const handleToggleSaveJob = async (jobId, e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
 
-    if (!user?.id) {
+    if (!isAuth || !user?.id) {
+      alert('Vui lòng đăng nhập để lưu việc làm');
       navigate('/login');
       return;
     }
 
-    setSavedJobIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(jobId)) {
-        newSet.delete(jobId);
+    const isCurrentlySaved = savedJobIds.has(jobId);
+
+    try {
+      let result;
+      if (isCurrentlySaved) {
+        result = await JobSearchService.removeSavedJob(jobId, user.id);
       } else {
-        newSet.add(jobId);
+        result = await JobSearchService.saveJob(jobId, user.id);
       }
-      return newSet;
-    });
-    
-    // TODO: Call API to save/unsave job
+
+      if (result.success) {
+        setSavedJobIds(prev => {
+          const newSet = new Set(prev);
+          if (isCurrentlySaved) {
+            newSet.delete(jobId);
+          } else {
+            newSet.add(jobId);
+          }
+          return newSet;
+        });
+      } else {
+        throw new Error(result.error || 'Có lỗi xảy ra');
+      }
+    } catch (error) {
+      console.error('Error toggling save job:', error);
+      alert(error.message || 'Có lỗi xảy ra khi lưu việc làm. Vui lòng thử lại.');
+    }
   };
 
   const handleJobClick = (jobId) => {
@@ -248,6 +223,13 @@ const JobSearch = () => {
 
   const handleCompanyClick = (companyId) => {
     navigate(`/companies/${companyId}`);
+  };
+
+  const updateURL = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (currentPageNum > 1) params.set('page', currentPageNum);
+    setSearchParams(params);
   };
 
   const handlePageChange = (newPage) => {

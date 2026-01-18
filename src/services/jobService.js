@@ -5,6 +5,18 @@
 
 import { supabaseMain } from './supabase';
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validate UUID format
+ * @param {string} uuid - The UUID to validate
+ * @returns {boolean} True if valid UUID
+ */
+const isValidUUID = (uuid) => {
+  return uuid && typeof uuid === 'string' && UUID_REGEX.test(uuid);
+};
+
 /**
  * Get job by ID with all related data
  * @param {string} jobId - The UUID of the job
@@ -12,6 +24,12 @@ import { supabaseMain } from './supabase';
  */
 export const getJobById = async (jobId) => {
   try {
+    // Validate UUID before making query
+    if (!isValidUUID(jobId)) {
+      const error = new Error('Invalid job ID format. Expected UUID.');
+      error.code = '22P02';
+      throw error;
+    }
     const { data, error } = await supabaseMain
       .from('jobs')
       .select(`
@@ -96,6 +114,11 @@ const extractYearsFromExperience = (experienceLevel) => {
  */
 export const checkApplying = async (jobId, candidateId) => {
   try {
+    // Validate UUIDs before making query
+    if (!isValidUUID(jobId) || !isValidUUID(candidateId)) {
+      return { value: false };
+    }
+
     if (!candidateId) {
       return { value: false };
     }
@@ -127,6 +150,11 @@ export const checkApplying = async (jobId, candidateId) => {
  */
 export const checkJobSaved = async (jobId, candidateId) => {
   try {
+    // Validate UUIDs before making query
+    if (!isValidUUID(jobId) || !isValidUUID(candidateId)) {
+      return { value: false };
+    }
+
     if (!candidateId) {
       return { value: false };
     }
@@ -159,6 +187,11 @@ export const checkJobSaved = async (jobId, candidateId) => {
  */
 export const processJobSaving = async (jobId, candidateId, status) => {
   try {
+    // Validate UUIDs before making query
+    if (!isValidUUID(jobId) || !isValidUUID(candidateId)) {
+      throw new Error('Invalid job or user ID format.');
+    }
+
     if (status) {
       // Save job
       const { error } = await supabaseMain
@@ -253,6 +286,11 @@ export const uploadCV = async (file, userId, jobId) => {
  */
 export const applyToJob = async (jobId, candidateId, applicationData = {}) => {
   try {
+    // Validate UUIDs before making query
+    if (!isValidUUID(jobId) || !isValidUUID(candidateId)) {
+      throw new Error('Invalid job or user ID format.');
+    }
+
     const { error } = await supabaseMain
       .from('job_applications')
       .insert({

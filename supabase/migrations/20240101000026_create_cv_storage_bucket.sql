@@ -15,6 +15,7 @@ ON CONFLICT (id) DO NOTHING;
 -- RLS Policies for CV storage bucket
 
 -- Policy: Users can upload their own CVs
+DROP POLICY IF EXISTS "Users can upload own CVs" ON storage.objects;
 CREATE POLICY "Users can upload own CVs"
 ON storage.objects
 FOR INSERT
@@ -25,6 +26,7 @@ WITH CHECK (
 );
 
 -- Policy: Users can view their own CVs
+DROP POLICY IF EXISTS "Users can view own CVs" ON storage.objects;
 CREATE POLICY "Users can view own CVs"
 ON storage.objects
 FOR SELECT
@@ -35,6 +37,7 @@ USING (
 );
 
 -- Policy: Users can delete their own CVs
+DROP POLICY IF EXISTS "Users can delete own CVs" ON storage.objects;
 CREATE POLICY "Users can delete own CVs"
 ON storage.objects
 FOR DELETE
@@ -47,6 +50,7 @@ USING (
 -- Policy: Employers can view CVs for jobs they posted
 -- Note: This requires a join with jobs table to verify ownership
 -- For now, we'll allow authenticated users to view CVs in job application folders
+DROP POLICY IF EXISTS "Employers can view CVs for their jobs" ON storage.objects;
 CREATE POLICY "Employers can view CVs for their jobs"
 ON storage.objects
 FOR SELECT
@@ -60,8 +64,3 @@ USING (
     AND j.created_by = auth.uid()
   )
 );
-
-COMMENT ON POLICY "Users can upload own CVs" ON storage.objects IS 'Allows authenticated users to upload CVs to their own folder';
-COMMENT ON POLICY "Users can view own CVs" ON storage.objects IS 'Allows users to view their own uploaded CVs';
-COMMENT ON POLICY "Users can delete own CVs" ON storage.objects IS 'Allows users to delete their own CVs';
-COMMENT ON POLICY "Employers can view CVs for their jobs" ON storage.objects IS 'Allows employers to view CVs submitted for their job postings';

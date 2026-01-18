@@ -12,11 +12,10 @@ import {
 } from "react-icons/md";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import JobSearchService from "../../../services/jobSearchService";
+import { useCandidateAuthStore } from "../../../stores/candidateAuthStore";
 
 dayjs.extend(relativeTime);
-
-// Draft data giống VietnamWork
-const MOCK_JOBS = [
   {
     id: 1,
     title: "UI/UX Designer (Web/Mobile App)",
@@ -182,17 +181,21 @@ function JobList() {
   const nav = useNavigate();
   const { setCurrentPage } = useContext(AppContext);
   const { register, handleSubmit } = useForm();
+  const user = useCandidateAuthStore((state) => state.current);
+  const isAuth = useCandidateAuthStore((state) => state.isAuth);
 
-  const [jobs, setJobs] = useState(MOCK_JOBS);
-  const [filteredJobs, setFilteredJobs] = useState(MOCK_JOBS);
+  const [jobs, setJobs] = useState([]);
+  const [filteredJobs, setFilteredJobs] = useState([]);
   const [savedJobs, setSavedJobs] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [currentPage, setCurrentPageState] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
 
   const jobsPerPage = 8;
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const startIndex = (currentPage - 1) * jobsPerPage;
   const currentJobs = filteredJobs.slice(startIndex, startIndex + jobsPerPage);
 
@@ -207,45 +210,132 @@ function JobList() {
 
   useEffect(() => {
     setCurrentPage("jobs");
+    loadJobs();
   }, [setCurrentPage]);
 
   useEffect(() => {
-    handleFilter();
-  }, [searchTerm, selectedLocation]);
+    loadJobs();
+  }, [currentPage, searchTerm, selectedLocation]);
 
-  const handleFilter = () => {
-    let filtered = jobs;
+  // Load saved jobs status when jobs change
+  useEffect(() => {
+    if (isAuth && user?.id && jobs.length > 0) {
+      loadSavedJobsStatus();
+    }
+  }, [isAuth, user?.id, jobs]);
 
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(
-        (job) =>
-          job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          job.skills.some((skill) =>
-            skill.toLowerCase().includes(searchTerm.toLowerCase()),
-          ),
-      );
+  const loadJobs = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const filters = {
+        search: searchTerm || null,
+        location: selectedLocation === "Tất cả" || !selectedLocation ? null : selectedLocation,
+        page: currentPage,
+        limit: jobsPerPage
+      };
+
+      const result = await JobSearchService.searchJobs(filters);
+
+      if (result.success) {
+        // Transform database jobs to match component format
+        const transformedJobs = result.data.map((job) => ({
+          id: job.id,
+          title: job.title,
+          company: job.company?.name || "Chưa cập nhật",
+          location: job.location?.city || job.location?.district || "Chưa cập nhật",
+          salary: job.salary_min && job.salary_max
+            ? `${Math.round(job.salary_min / 1000000)}-${Math.round(job.salary_max / 1000000)} triệu`
+            : "Thỏa thuận",
+          postedTime: job.published_at ? dayjs(job.published_at).fromNow() : "",
+          companyLogo: job.company?.logo_url,
+          workType: job.work_type || "Full-time",
+          experience: job.experience_level || "Không yêu cầu",
+        }));
+
+        setJobs(transformedJobs);
+        setFilteredJobs(transformedJobs);
+        setTotalPages(result.totalPages || 1);
+        setTotalJobs(result.total || 0);
+      } else {
+        setError("Không thể tải danh sách việc làm");
+        setJobs([]);
+        setFilteredJobs([]);
+      }
+    } catch (err) {
+      console.error("Error loading jobs:", err);
+      setError("Đã xảy ra lỗi khi tải danh sách việc làm");
+      setJobs([]);
+      setFilteredJobs([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSearch = (data) => {
-    setIsLoading(true);
-    setSearchTerm(data.searchTerm || "");
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+  const loadSavedJobsStatus = async () => {
+    if (!isAuth || !user?.id) return;
+
+    try {
+      const jobIds = jobs.map((job) => job.id);
+      const savedStatusPromises = jobIds.map((jobId) =>
+        JobSearchService.isJobSaved(jobId, user.id)
+      );
+      const results = await Promise.all(savedStatusPromises);
+
+      const savedIds = new Set();
+      results.forEach((result, index) => {
+        if (result.success && result.isSaved) {
+          savedIds.add(jobIds[index]);
+        }
+      });
+
+      setSavedJobs(savedIds);
+    } catch (error) {
+      console.error("Error loading saved jobs status:", error);
+    }
   };
 
-  const toggleSaveJob = (jobId) => {
-    setSavedJobs((prev) => {
-      const newSaved = new Set(prev);
-      if (newSaved.has(jobId)) {
-        newSaved.delete(jobId);
+  const handleSearch = async (data) => {
+    setSearchTerm(data.searchTerm || "");
+    setCurrentPageState(1);
+  };
+
+  const toggleSaveJob = async (jobId, e) => {
+    e?.stopPropagation();
+
+    if (!isAuth || !user?.id) {
+      alert("Vui lòng đăng nhập để lưu việc làm");
+      return;
+    }
+
+    const isCurrentlySaved = savedJobs.has(jobId);
+
+    try {
+      let result;
+      if (isCurrentlySaved) {
+        result = await JobSearchService.removeSavedJob(jobId, user.id);
       } else {
-        newSaved.add(jobId);
+        result = await JobSearchService.saveJob(jobId, user.id);
       }
-      return newSaved;
-    });
+
+      if (result.success) {
+        setSavedJobs((prev) => {
+          const newSet = new Set(prev);
+          if (isCurrentlySaved) {
+            newSet.delete(jobId);
+          } else {
+            newSet.add(jobId);
+          }
+          return newSet;
+        });
+      } else {
+        throw new Error(result.error || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      console.error("Error toggling save job:", error);
+      alert(error.message || "Có lỗi xảy ra khi lưu việc làm. Vui lòng thử lại.");
+    }
   };
 
   const goToJobDetail = (jobId) => {
@@ -347,16 +437,30 @@ function JobList() {
           <div className='col-12'>
             <div className='d-flex justify-content-between align-items-center mb-4'>
               <h4 className='text-dark mb-0'>
-                Có {filteredJobs.length} việc làm phù hợp với bạn
+                {isLoading ? "Đang tải..." : `Có ${totalJobs} việc làm phù hợp với bạn`}
               </h4>
               <div className='text-muted'>
                 Trang {currentPage} / {totalPages}
               </div>
             </div>
 
+            {isLoading && (
+              <div className='text-center py-5'>
+                <div className='spinner-border text-primary' role='status'>
+                  <span className='visually-hidden'>Đang tải...</span>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className='alert alert-danger' role='alert'>
+                {error}
+              </div>
+            )}
+
             {/* Job Cards */}
             <div className='row'>
-              {currentJobs.map((job) => (
+              {!isLoading && currentJobs.map((job) => (
                 <div key={job.id} className='col-lg-4 col-md-6 col-sm-12 mb-3'>
                   <div
                     className='card border-0 shadow-sm hover-lift'
@@ -376,19 +480,32 @@ function JobList() {
                           style={{
                             width: "48px",
                             height: "48px",
-                            backgroundColor: "#1e40af",
-                            borderRadius: "8px"
+                            backgroundColor: "#f3f4f6",
+                            borderRadius: "8px",
+                            overflow: "hidden"
                           }}
                         >
-                          <div 
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              backgroundColor: "#3b82f6",
-                              clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-                              transform: "rotate(45deg)"
-                            }}
-                          ></div>
+                          {job.companyLogo ? (
+                            <img 
+                              src={job.companyLogo} 
+                              alt={job.company}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover"
+                              }}
+                            />
+                          ) : (
+                            <div 
+                              style={{
+                                width: "20px",
+                                height: "20px",
+                                backgroundColor: "#9ca3af",
+                                clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                transform: "rotate(45deg)"
+                              }}
+                            ></div>
+                          )}
                         </div>
                         
                         {/* Job Info */}
@@ -422,15 +539,6 @@ function JobList() {
                             >
                               {job.company}
                             </p>
-                            <div 
-                              className='text-primary mb-2'
-                              style={{ 
-                                fontSize: "0.8rem",
-                                fontWeight: "500"
-                              }}
-                            >
-                              Độ phù hợp với bạn: <span style={{ color: "#3b82f6" }}>90%</span>
-                            </div>
                           </div>
 
                           {/* Bottom Row */}
@@ -446,7 +554,7 @@ function JobList() {
                                 borderRadius: "12px"
                               }}
                             >
-                              {job.postedTime}
+                              {job.salary}
                             </span>
                             
                             {/* Location */}
@@ -462,10 +570,7 @@ function JobList() {
                         {/* Bookmark */}
                         <button
                           className='btn btn-sm border-0 p-1 flex-shrink-0 align-self-start'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleSaveJob(job.id);
-                          }}
+                          onClick={(e) => toggleSaveJob(job.id, e)}
                         >
                           {savedJobs.has(job.id) ? (
                             <BsBookmarkFill className='text-primary' size={16} />
@@ -536,13 +641,6 @@ function JobList() {
               </div>
             )}
 
-            {/* Load More Button */}
-            <div className='text-center mt-4'>
-              <button className='btn btn-outline-primary btn-lg'>
-                <BsSearch className='me-2' />
-                1450 trang
-              </button>
-            </div>
 
             {/* No Results */}
             {filteredJobs.length === 0 && (

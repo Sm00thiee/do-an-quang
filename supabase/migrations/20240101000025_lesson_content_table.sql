@@ -25,12 +25,14 @@ CREATE INDEX IF NOT EXISTS idx_lesson_content_active ON lesson_content(is_active
 ALTER TABLE lesson_content ENABLE ROW LEVEL SECURITY;
 
 -- Allow public read access to lesson content
+DROP POLICY IF EXISTS "Allow public read access to lesson_content" ON lesson_content;
 CREATE POLICY "Allow public read access to lesson_content"
     ON lesson_content FOR SELECT
     TO public
     USING (is_active = true);
 
 -- Allow authenticated users to read all lesson content
+DROP POLICY IF EXISTS "Allow authenticated read access to lesson_content" ON lesson_content;
 CREATE POLICY "Allow authenticated read access to lesson_content"
     ON lesson_content FOR SELECT
     TO authenticated

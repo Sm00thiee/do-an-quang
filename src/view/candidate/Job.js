@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { BsBookmark, BsBookmarkFill, BsShare, BsClock, BsGeoAlt, BsCurrencyDollar, BsBriefcase, BsPeople } from "react-icons/bs";
 import { BiBuildings } from "react-icons/bi";
+import { toast } from "react-toastify";
 import jobService from "../../services/jobService";
 import { useCandidateAuthStore } from "../../stores/candidateAuthStore";
 import ApplyJobPopup from "../../components/ApplyJobPopup";
@@ -10,6 +11,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function Job() {
   const { id } = useParams();
@@ -26,32 +30,57 @@ function Job() {
   const [isSaved, setIsSaved] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Validate UUID format
+  const isValidUUID = (uuid) => {
+    return uuid && UUID_REGEX.test(uuid);
+  };
 
   const getJobInf = async () => {
+    // Validate UUID before making API call
+    if (!isValidUUID(id)) {
+      setError('ID công việc không hợp lệ. Vui lòng quay lại trang danh sách việc làm.');
+      console.error('Invalid job ID format:', id);
+      return;
+    }
+
     try {
       const res = await jobService.getJobById(id);
       setJob(res);
+      setError(null);
     } catch (error) {
       console.error('Error fetching job:', error);
-      alert('Không thể tải thông tin công việc. Vui lòng thử lại sau.');
+      // Check if it's a UUID validation error
+      if (error.code === '22P02' || error.message?.includes('invalid input syntax for type uuid')) {
+        setError('ID công việc không hợp lệ. Vui lòng quay lại trang danh sách việc làm.');
+      } else {
+        setError('Không thể tải thông tin công việc. Vui lòng thử lại sau.');
+      }
     }
   };
 
   const checkApplying = async () => {
+    if (!isValidUUID(id) || !user?.id) return;
+    
     try {
       const res = await jobService.checkApplying(id, user.id);
       setIsApplied(res.value);
     } catch (error) {
       console.error('Error checking application:', error);
+      // Silently fail for application check
     }
   };
 
   const checkJobSaved = async () => {
+    if (!isValidUUID(id) || !user?.id) return;
+    
     try {
       const res = await jobService.checkJobSaved(id, user.id);
       setIsSaved(res.value);
     } catch (error) {
       console.error('Error checking saved job:', error);
+      // Silently fail for saved job check
     }
   };
 
@@ -79,7 +108,10 @@ function Job() {
       // Submit application
       await jobService.applyToJob(id, user.id, applicationData);
 
-      alert("Ứng tuyển thành công!");
+      toast.success("Ứng tuyển thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       setShowApplyModal(false);
       setIsApplied(true);
       // Refresh page to update UI
@@ -87,7 +119,8 @@ function Job() {
     } catch (error) {
       console.error('Error applying to job:', error);
       const errorMessage = error.message || 'Có lỗi xảy ra khi ứng tuyển. Vui lòng thử lại sau.';
-      alert(errorMessage);
+      // Re-throw error so popup can display it in-app instead of browser alert
+      throw new Error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -95,21 +128,34 @@ function Job() {
 
   const toggleSaveJob = async () => {
     if (!isAuth) {
-      alert("Vui lòng đăng nhập!");
+      toast.warning("Vui lòng đăng nhập!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
     try {
       await jobService.processJobSaving(id, user.id, !isSaved);
       setIsSaved(!isSaved);
+      toast.success(!isSaved ? "Đã lưu việc làm" : "Đã bỏ lưu việc làm", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     } catch (error) {
       console.error('Error saving job:', error);
-      alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại sau.', {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   };
 
   const handleApplyClick = () => {
     if (!isAuth) {
-      alert("Vui lòng đăng nhập!");
+      toast.warning("Vui lòng đăng nhập!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
     if (isApplied) {
@@ -119,15 +165,37 @@ function Job() {
   };
 
   useEffect(() => {
-    getJobInf();
-  }, []);
+    if (id) {
+      getJobInf();
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (isAuth) {
+    if (isAuth && id) {
       checkApplying();
       checkJobSaved();
     }
-  }, [isAuth]);
+  }, [isAuth, id]);
+
+  // Show error message if ID is invalid
+  if (error || !isValidUUID(id)) {
+    return (
+      <div className="job-detail-container">
+        <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>
+          <div className="alert alert-danger" role="alert">
+            <h4>Không tìm thấy công việc</h4>
+            <p>{error || 'ID công việc không hợp lệ.'}</p>
+            <button 
+              className="btn btn-primary mt-3" 
+              onClick={() => navigate('/jobs')}
+            >
+              Quay lại danh sách việc làm
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="job-detail-container">

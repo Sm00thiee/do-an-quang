@@ -9,6 +9,7 @@ import {
   BsBoxArrowRight
 } from "react-icons/bs";
 import { useEmployerAuthStore } from "../../../stores/employerAuthStore";
+import authApi from "../../../api/auth";
 
 const styles = {
   layout: {
@@ -224,7 +225,12 @@ function EmployerLayout({ children }) {
     return location.pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await authApi.logout(2);
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
     logout();
     navigate("/employer/login");
   };

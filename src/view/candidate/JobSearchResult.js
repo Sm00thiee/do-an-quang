@@ -28,8 +28,8 @@ const JobSearchResult = () => {
 
   // Filter states - matching Figma design exactly
   const [filters, setFilters] = useState({
-    experience: ['Dưới 1 năm'], // Selected by default in design
-    salary: ['20 - 25 triệu'], // Selected by default in design
+    experience: ['Tất cả'], // Selected by default in design
+    salary: ['Tất cả'], // Selected by default in design
     location: ['Tất cả'], // Selected by default in design
   });
 
@@ -391,42 +391,44 @@ const JobSearchResult = () => {
                     const isSaved = savedJobIds.has(job.id);
                     return (
                       <div key={job.id} className="job-card">
-                        <div className="job-card-left">
-                          <div className="job-card-content">
-                            {/* Company Logo */}
-                            <div className="company-logo">
-                              {job.company?.logo_url ? (
-                                <img src={job.company.logo_url} alt={job.company?.name || 'Company'} />
-                              ) : (
-                                <div className="logo-placeholder">
-                                  {job.company?.short_name?.[0] || job.company?.name?.[0] || 'C'}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Job Info */}
-                            <div className="job-info">
-                              <h3 className="job-title">{job.title}</h3>
-                              <p className="company-name">{job.company?.name}</p>
-                              <p className="job-salary">
-                                {job.salary_min && job.salary_max 
-                                  ? `${job.salary_min}-${job.salary_max} triệu`
-                                  : 'Thỏa thuận'}
-                              </p>
-
-                              {/* Badges */}
-                              <div className="job-badges">
-                                <span className="badge badge-location">
-                                  {job.location?.city || 'Hồ Chí Minh'}
-                                </span>
-                                <span className="badge badge-experience">
-                                  {job.experience || '1 năm'}
-                                </span>
+                        {/* Left Section: Logo with Slogan */}
+                        <div className="job-card-logo-section">
+                          <div className="company-logo">
+                            {job.company?.logo_url ? (
+                              <img src={job.company.logo_url} alt={job.company?.name || 'Company'} />
+                            ) : (
+                              <div className="logo-placeholder">
+                                {job.company?.short_name?.[0] || job.company?.name?.[0] || 'C'}
                               </div>
-                            </div>
+                            )}
+                          </div>
+                          {job.company?.slogan && (
+                            <p className="company-slogan">{job.company.slogan}</p>
+                          )}
+                        </div>
+
+                        {/* Middle Section: Job Info */}
+                        <div className="job-card-info-section">
+                          <h3 className="job-title">{job.title}</h3>
+                          <p className="company-name">{job.company?.name}</p>
+                          <p className="job-salary">
+                            {job.salary_min && job.salary_max 
+                              ? `${job.salary_min}-${job.salary_max} triệu`
+                              : 'Thỏa thuận'}
+                          </p>
+
+                          {/* Badges */}
+                          <div className="job-badges">
+                            <span className="badge badge-location">
+                              {job.location?.city || 'Hồ Chí Minh'}
+                            </span>
+                            <span className="badge badge-experience">
+                              {job.experience || '1 năm'}
+                            </span>
                           </div>
                         </div>
 
+                        {/* Right Section: Action Buttons */}
                         <div className="job-card-right">
                           <button
                             className={`save-button ${isSaved ? 'saved' : ''}`}

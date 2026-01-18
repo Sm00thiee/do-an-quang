@@ -10,6 +10,7 @@ const ApplyJobPopup = ({ job, user, isOpen, onClose, onSubmit, isSubmitting = fa
   });
   const [cvFile, setCvFile] = useState(null);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   const cvUploadRef = useRef(null);
@@ -112,14 +113,31 @@ const ApplyJobPopup = ({ job, user, isOpen, onClose, onSubmit, isSubmitting = fa
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Clear previous submit error
+    setSubmitError(null);
+    
     if (!validateForm()) {
       return;
     }
 
-    await onSubmit({
-      ...formData,
-      cvFile
-    });
+    try {
+      await onSubmit({
+        ...formData,
+        cvFile
+      });
+      // If onSubmit succeeds, the parent component will handle success and close modal
+    } catch (error) {
+      // Handle error from parent component - display in-app instead of browser alert
+      const errorMessage = error?.message || error?.toString() || 'Có lỗi xảy ra khi nộp hồ sơ. Vui lòng thử lại sau.';
+      setSubmitError(errorMessage);
+      // Scroll to error message
+      setTimeout(() => {
+        const errorElement = document.querySelector('.apply-popup-error-container');
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
   };
 
   const handleCancel = () => {
@@ -130,6 +148,7 @@ const ApplyJobPopup = ({ job, user, isOpen, onClose, onSubmit, isSubmitting = fa
     });
     setCvFile(null);
     setErrors({});
+    setSubmitError(null);
     onClose();
   };
 
@@ -275,6 +294,20 @@ const ApplyJobPopup = ({ job, user, isOpen, onClose, onSubmit, isSubmitting = fa
                 )}
               </div>
             </div>
+
+            {/* Submit Error Display */}
+            {submitError && (
+              <div className="apply-popup-error-container" style={{
+                padding: '12px',
+                marginBottom: '16px',
+                backgroundColor: '#fee',
+                border: '1px solid #fcc',
+                borderRadius: '8px',
+                color: '#c33'
+              }}>
+                <strong>Lỗi:</strong> {submitError}
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="apply-popup-actions">
