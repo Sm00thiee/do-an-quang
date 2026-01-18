@@ -11,7 +11,8 @@ export const useEmployerAuthStore = create(
 
       logout: () => {
         localStorage.removeItem('employer_jwt');
-        localStorage.removeItem('employer-auth-storage');        set({ user: null, isAuth: false });
+        localStorage.removeItem('employer-auth-storage');
+        set({ user: null, isAuth: false });
       },
     }),
     {
